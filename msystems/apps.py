@@ -1,47 +1,61 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
+    # URL to be redirected to after successful login
+    'base_login_redirect': "",
     'saml_config': {
         # Strict mode: SAML responses must be validated strictly.
         "strict": True,
-        "debug": False,  # Set this to True for debugging purposes.
+        # Set this to True for debugging purposes.
+        "debug": False,
+        # Service provider settinhs
         "sp": {
-            # TODO Resolve these urls from config, currently hard-coded
-            "entityId": "http://127.0.0.1:8000/api/msystems/saml/metadata/",
+            # entityId, acs and sls urls are validated by IdP
+            "entityId": "",
+            # callback url for login attemps
             "assertionConsumerService": {
-                "url": "http://127.0.0.1:8000/api/msystems/saml/acs/",
+                "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
             },
+            # endpoint called from idp after logout
             "singleLogoutService": {
-                "url": "http://127.0.0.1:8000/api/msystems/saml/sls/",
+                "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
             },
-            # X509 certificate for the SP, base64 string format
+            # X509 certificate for the SP, PEM string format
+            # -----BEGIN CERTIFICATE-----
+            # some base 64 string
+            # -----END CERTIFICATE-----
             "x509cert": "",
-            # Needed to sign our messages
-            "privateKey": "",
+            # RSA private key, PEM string format
+            # -----BEGIN PRIVATE KEY-----
+            # some base 64 string
+            # -----END PRIVATE KEY-----
+            "privateKey": ""
         },
         "idp": {
-            "entityId": "https://mpass.staging.egov.md",
+            "entityId": "",
+            # login endpoint to redirect to
             "singleSignOnService": {
-                "url": "https://mpass.staging.egov.md/login/saml/",
+                "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
             },
+            # endpoint to call after logout from openimis
             "singleLogoutService": {
-                "url": "https://mpass.staging.egov.md/logout/",
+                "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
             },
-            # Mpass staging public X509 certificate, https://mpass.staging.egov.md/meta/saml
-            "x509cert": "MIIDCDCCAfSgAwIBAgIQZQkLso6pM7VIIMdXosWYTTAJBgUrDgMCHQUAMBsxGTAXBgNVBAMTEHRlc3RtcGFzcy5nb3YubWQwHhcNMTQwNzE2MTEwOTU1WhcNMzkxMjMxMjM1OTU5WjAbMRkwFwYDVQQDExB0ZXN0bXBhc3MuZ292Lm1kMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA03X1rhepQAg4ZP7LzpdiN3eBsl/wxO427bj2IkFuDdkqBxfGOlB2HYC0QYsA57UgywAsj33t1VOogzsOD3eia3Zg/lIs47x1Aw4ykVt2QA4wuZxW0GRpDoJPmDsDR0Hy9ixURNCVHCBvA6fOF7XML+PDMf6k7cGEuN/tqO1ENQM736P2w7FcDg1Kftx/5ZjSRudgkARfB4EOWzg9mvooLmEPjdm61Y1mesgqNvbQtJ7dMDl/nAMzU7sAwqfYR0WWsW/vYjXOBbIwwFU7Zh+wzdu2ZQgtWE2pU8UNAF0kpQ7e+nM3IZoZDfuAo9YwU/av8IGhkHGq+AhRr4ymO7KteQIDAQABo1AwTjBMBgNVHQEERTBDgBBVWSCwlA+0kK8Dsm8WWpbhoR0wGzEZMBcGA1UEAxMQdGVzdG1wYXNzLmdvdi5tZIIQZQkLso6pM7VIIMdXosWYTTAJBgUrDgMCHQUAA4IBAQAsVo5jlDWCof7noG518MMnT55ytA8tPTRIuedF0oTGcoA63jHCKmj5Bf58FPwlc2EjX3B0R4LxCdTKwLJrU+jrxRpcxboAJXL1g1fp5FCy5Bvt0JHb6wEqNl2Rfk1gYawJqWZCIphl6oWpXIrKk2vkeIaKrsqHb/jHILYete+mQZ+JAIZqbiM8Fusdrzp8rZ+15s9QulZ6uj4g3Zk7W8Gi9i5e2XQ5pr9UEw5SSQy6O0doxiJvSUfM6htrrQTtK2CzUCNpWz990v5ogzTaiZMbm7+zOrOAYybLL+YJBA9ENb3M3rQY5CTtTRF/7KO61CIkEIr+kln3GocUw5hfl9z5",
+            # Idp public X509 certificate
+            "x509cert": ""
         },
 
         # Advanced security options, comment out for default
         "security": {
             # "nameIdEncrypted": false,
-            # "authnRequestsSigned": false,
-            # "logoutRequestSigned": false,
-            # "logoutResponseSigned": false,
-            # "signMetadata": True,
+            "authnRequestsSigned": True,
+            "logoutRequestSigned": True,
+            "logoutResponseSigned": True,
+            "signMetadata": True,
             # "wantMessagesSigned": false,
             # "wantAssertionsSigned": false,
             # "wantNameId": true,
@@ -52,8 +66,9 @@ DEFAULT_CFG = {
             # "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
             # "rejectDeprecatedAlgorithm": true
         },
-        
-        # Additional info for metadata 
+
+        # TODO
+        # Additional info for metadata
         # "contactPerson": {
         #     "technical": {
         #         "givenName": "technical_name",
@@ -80,6 +95,7 @@ class MsystemsConfig(AppConfig):
     name = 'msystems'
 
     saml_config = None
+    base_login_redirect = None
 
     def ready(self):
         from core.models import ModuleConfiguration
