@@ -5,7 +5,11 @@ from django.shortcuts import redirect
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from msystems.apps import MsystemsConfig
+from msystems.services import SamlUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings, OneLogin_Saml2_Utils
+from graphql_jwt.decorators import jwt_cookie
+
+from core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +71,16 @@ def acs(request):
     errors = auth.get_errors()
 
     if not errors:
-        user = auth.get_nameid
+        username = auth.get_nameid()
         user_data = auth.get_attributes()
 
-        # TODO remove the log and add proper user handling
-        logger.debug("User %s logged in with data %s", user, str(user_data))
+        logger.debug("User %s logged in with data %s", username, str(user_data))
+        SamlUserService().login(username=username, user_data=user_data)
 
         if 'RelayState' in req['post_data'] and _validate_relay_state(req['post_data']['RelayState']):
             return redirect(auth.redirect_to(req['post_data']['RelayState']))
+        else:
+            return redirect(MsystemsConfig.base_login_redirect)
     else:
         logger.error("Login attempt failed: %s\n%s", str(
             errors[-1]), auth.get_last_error_reason())
