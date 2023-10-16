@@ -1,4 +1,5 @@
 import logging
+from core.models import User
 
 from django.http import HttpResponse, HttpResponseServerError
 from django.shortcuts import redirect
@@ -7,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from msystems.apps import MsystemsConfig
 from msystems.services import SamlUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings, OneLogin_Saml2_Utils
+from graphql_jwt.decorators import jwt_cookie
+from graphql_jwt.shortcuts import get_token, create_refresh_token
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +53,7 @@ def metadata(request):
 
 # Saml have it's own csrf protection, django not needed
 @csrf_exempt
+@jwt_cookie
 @require_POST
 def acs(request):
     # From python3-saml django example
@@ -73,7 +77,10 @@ def acs(request):
 
         logger.debug("User %s logged in with data %s",
                      username, str(user_data))
-        SamlUserService().login(username=username, user_data=user_data)
+        user = SamlUserService().login(username=username, user_data=user_data)
+        # Tokens to be set in cookies
+        request.jwt_token = get_token(user)
+        request.jwt_refresh_token = create_refresh_token(user)
 
         if 'RelayState' in req['post_data'] and _validate_relay_state(req['post_data']['RelayState']):
             return redirect(auth.redirect_to(req['post_data']['RelayState']))

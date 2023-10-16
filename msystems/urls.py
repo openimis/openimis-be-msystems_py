@@ -6,7 +6,7 @@ saml_urls = [
     path("login/", views.login),
     path("metadata/", views.metadata),
     path("acs/", views.acs),
-    path("sls/", views.sls)
+    path("sls/", views.sls),
 ]
 
 urlpatterns = [

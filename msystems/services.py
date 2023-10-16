@@ -13,6 +13,8 @@ class SamlUserService:
         else:
             self._update_user(user, user_data)
         self._update_user_legal_entities(user, user_data)
+        
+        return user
 
     def _create_user(self, username: str, user_data: dict) -> User:
         i_user = InteractiveUser(
