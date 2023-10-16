@@ -7,9 +7,6 @@ from django.views.decorators.csrf import csrf_exempt
 from msystems.apps import MsystemsConfig
 from msystems.services import SamlUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings, OneLogin_Saml2_Utils
-from graphql_jwt.decorators import jwt_cookie
-
-from core.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +71,8 @@ def acs(request):
         username = auth.get_nameid()
         user_data = auth.get_attributes()
 
-        logger.debug("User %s logged in with data %s", username, str(user_data))
+        logger.debug("User %s logged in with data %s",
+                     username, str(user_data))
         SamlUserService().login(username=username, user_data=user_data)
 
         if 'RelayState' in req['post_data'] and _validate_relay_state(req['post_data']['RelayState']):
