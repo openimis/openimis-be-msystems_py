@@ -1,5 +1,6 @@
 import logging
 from core.models import User, InteractiveUser
+from secrets import token_hex
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,9 @@ class SamlUserService:
             last_name=user_data.get('LastName')[0],
             language_id='en',
             audit_user_id=0,
-            is_associated=False
+            is_associated=False,
+            private_key=token_hex(128),
+            password="locked" # this is password hash, it means no password will match
         )
         i_user.save()
         core_user = User(username=username)
