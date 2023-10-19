@@ -1,5 +1,6 @@
 from django.test import TestCase
 from copy import deepcopy
+from location.models import Location
 
 from msystems.services import SamlUserService
 from msystems.tests.data import example_username, example_user_data
@@ -66,3 +67,12 @@ class SamlUserServiceTestCase(TestCase):
         self.assertTrue(InteractiveUser.objects
                         .filter(login_name=example_username, validity_to__isnull=True)
                         .exists())
+        
+    def test_user_district(self):
+        self.service.login(username=example_username,
+                           user_data=example_user_data)
+        
+        i_user = InteractiveUser.objects.get(login_name=example_username)
+        district = Location.objects.get(code='MD01')
+        self.assertEqual([ud.location for ud in i_user.userdistrict_set.all()], [district])
+        

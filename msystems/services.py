@@ -1,21 +1,26 @@
 import logging
-from core.models import User, InteractiveUser
+from django.db import transaction
 from secrets import token_hex
 
+from core.models import User, InteractiveUser
+from core.services.userServices import create_or_update_user_districts
+from location.models import Location
 logger = logging.getLogger(__name__)
 
 
 class SamlUserService:
+    
     def login(self, username: str, user_data: dict):
-        user = User.objects.prefetch_related(
-            'i_user').filter(username=username).first()
-        if not user:
-            user = self._create_user(username, user_data)
-        else:
-            self._update_user(user, user_data)
-        self._update_user_legal_entities(user, user_data)
+        with transaction.atomic():
+            user = User.objects.prefetch_related(
+                'i_user').filter(username=username).first()
+            if not user:
+                user = self._create_user(username, user_data)
+            else:
+                self._update_user(user, user_data)
+            self._update_user_legal_entities(user, user_data)
         
-        return user
+            return user
 
     def _create_user(self, username: str, user_data: dict) -> User:
         i_user = InteractiveUser(
@@ -29,6 +34,10 @@ class SamlUserService:
             password="locked" # this is password hash, it means no password will match
         )
         i_user.save()
+        
+        district = Location.objects.get(code='MD01', validity_to__isnull=True)
+        create_or_update_user_districts(i_user, [district.id], 0)
+        
         core_user = User(username=username)
         core_user.i_user = i_user
         core_user.save()
