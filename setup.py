@@ -24,6 +24,8 @@ setup(
         'django-db-signals',
         'djangorestframework',
         'openimis-be-core',
+        'openimis-be-location',
+        'openimis-be-policyholder',
         'python3-saml>=1.15.0'
     ],
     classifiers=[
