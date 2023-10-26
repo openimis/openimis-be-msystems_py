@@ -29,7 +29,7 @@ def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
         #  https://github.com/SAML-Toolkits/python3-saml/issues/205
         if "SAMLResponse" in req["post_data"]:
             req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
-        if "SAMLResponse" in req["post_data"]:
+        if "SAMLRequest" in req["post_data"]:
             req['get_data']['SAMLRequest'] = req["post_data"].get("SAMLRequest")
     logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
