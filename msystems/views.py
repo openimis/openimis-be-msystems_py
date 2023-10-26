@@ -4,10 +4,11 @@ from django.http import HttpResponse, HttpResponseServerError
 from django.shortcuts import redirect
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_exempt
 from msystems.apps import MsystemsConfig
 from msystems.services import SamlUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings
-from graphql_jwt.decorators import jwt_cookie
+from graphql_jwt.decorators import jwt_cookie, delete_cookie
 from graphql_jwt.shortcuts import get_token, create_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ def _build_auth(request) -> OneLogin_Saml2_Auth:
         # 'lowercase_urlencoding': True,
         'post_data': request.POST.copy()
     }
+    logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
 
 
@@ -55,6 +57,7 @@ def metadata(request):
 
 # Saml have its own csrf protection, django not needed
 @csrf_exempt
+@xframe_options_exempt
 @jwt_cookie
 @require_POST
 def acs(request):
@@ -85,6 +88,7 @@ def acs(request):
 
 # Saml have its own csrf protection, django not needed
 @csrf_exempt
+@jwt_cookie
 @require_POST
 def sls(request):
     auth = _build_auth(request)
@@ -93,9 +97,11 @@ def sls(request):
 
     if not errors:
         username = auth.get_nameid()
-        user_data = auth.get_attributes()
 
-        logger.debug("Logout attempt, username=%s, user_data=%s", username, user_data)
+        request.delete_jwt_cookie = True
+        request.delete_refresh_token_cookie = True
+
+        logger.debug("Logout attempt, username=%s", username)
 
         if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
             return redirect(auth.redirect_to(request.POST['RelayState']))
