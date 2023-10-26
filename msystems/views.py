@@ -13,8 +13,7 @@ from graphql_jwt.shortcuts import get_token, create_refresh_token
 logger = logging.getLogger(__name__)
 
 
-@require_GET
-def login(request):
+def _build_auth(request) -> OneLogin_Saml2_Auth:
     # From python3-saml django example
     req = {
         'https': 'on' if request.is_secure() else 'off',
@@ -25,9 +24,13 @@ def login(request):
         # 'lowercase_urlencoding': True,
         'post_data': request.POST.copy()
     }
-    auth = OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
+    return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
 
-    # add a redirect to base_login_redirect from a successful login attempt
+
+@require_GET
+def login(request):
+    # From python3-saml django example
+    auth = _build_auth(request)
     login_request = auth.login(return_to=MsystemsConfig.base_login_redirect)
     return redirect(login_request)
 
@@ -37,11 +40,11 @@ def metadata(request):
     # from python3-saml docs
     saml_settings = OneLogin_Saml2_Settings(
         settings=MsystemsConfig.saml_config, sp_validation_only=True)
-    metadata = saml_settings.get_sp_metadata()
-    errors = saml_settings.validate_metadata(metadata)
+    saml_metadata = saml_settings.get_sp_metadata()
+    errors = saml_settings.validate_metadata(saml_metadata)
 
     if len(errors) == 0:
-        resp = HttpResponse(content=metadata, content_type='text/xml')
+        resp = HttpResponse(content=saml_metadata, content_type='text/xml')
     else:
         errors_str = ', '.join(errors)
         logger.error(
@@ -50,52 +53,41 @@ def metadata(request):
     return resp
 
 
-# Saml have it's own csrf protection, django not needed
+# Saml have its own csrf protection, django not needed
 @csrf_exempt
 @jwt_cookie
 @require_POST
 def acs(request):
-    # From python3-saml django example
-    req = {
-        'https': 'on' if request.is_secure() else 'off',
-        'http_host': request.META['HTTP_HOST'],
-        'script_name': request.META['PATH_INFO'],
-        'get_data': request.GET.copy(),
-        # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
-        # 'lowercase_urlencoding': True,
-        'post_data': request.POST.copy()
-    }
-
-    auth = OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
+    auth = _build_auth(request)
     auth.process_response()
     errors = auth.get_errors()
 
-    if not errors:
-        username = auth.get_nameid()
-        user_data = auth.get_attributes()
-
-        user = SamlUserService().login(username=username, user_data=user_data)
-        # Tokens to be set in cookies
-        request.jwt_token = get_token(user)
-        request.jwt_refresh_token = create_refresh_token(user)
-
-        if 'RelayState' in req['post_data'] and _validate_relay_state(req['post_data']['RelayState']):
-            return redirect(auth.redirect_to(req['post_data']['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
-    else:
+    if errors:
         logger.error("Login attempt failed: %s\n%s", str(
             errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
         return redirect(MsystemsConfig.base_login_redirect)
+    username = auth.get_nameid()
+    user_data = auth.get_attributes()
+
+    user = SamlUserService().login(username=username, user_data=user_data)
+
+    # Tokens to be set in cookies
+    request.jwt_token = get_token(user)
+    request.jwt_refresh_token = create_refresh_token(user)
+
+    if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
+        return redirect(auth.redirect_to(request.POST['RelayState']))
+    else:
+        return redirect(MsystemsConfig.base_login_redirect)
 
 
-# Saml have it's own csrf protection, django not needed
+# Saml have its own csrf protection, django not needed
 @csrf_exempt
 @require_POST
 def sls(request):
-    # TODO implement SLS
-    return HttpResponse("Ok")
+    # This will be removed
+    pass
 
 
 def _validate_relay_state(relay_state):
