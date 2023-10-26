@@ -27,9 +27,9 @@ def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
     }
     if slo_workaround:
         #  https://github.com/SAML-Toolkits/python3-saml/issues/205
-        if req["post_data"].get("SAMLResponse"):
+        if "SAMLResponse" in req["post_data"]:
             req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
-        if req["post_data"].get("SAMLResponse"):
+        if "SAMLResponse" in req["post_data"]:
             req['get_data']['SAMLRequest'] = req["post_data"].get("SAMLRequest")
     logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
@@ -89,7 +89,7 @@ def _handle_acs_login(request):
 
 
 def _handle_acs_logout(request):
-    auth = _build_auth(request)
+    auth = _build_auth(request, slo_workaround=True)
     # We do not use local session, we are telling the lib not to touch it
     auth.process_slo(keep_local_session=True)
     errors = auth.get_errors()
