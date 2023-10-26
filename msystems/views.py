@@ -66,25 +66,23 @@ def _handle_acs_login(request):
     auth.process_response()
     errors = auth.get_errors()
 
-    if not errors:
-        logger.debug("SAML Login")
-        username = auth.get_nameid()
-        user_data = auth.get_attributes()
-
-        user = SamlUserService().login(username=username, user_data=user_data)
-
-        # Tokens to be set in cookies
-        request.jwt_token = get_token(user)
-        request.jwt_refresh_token = create_refresh_token(user)
-
-        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
-            return redirect(auth.redirect_to(request.POST['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
-    else:
-        logger.error("SAML Login failed: %s\n%s", str(
-            errors[-1]), auth.get_last_error_reason())
+    if errors:
+        logger.error("SAML Login failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
+        return redirect(MsystemsConfig.base_login_redirect)
+
+    username = auth.get_nameid()
+    user_data = auth.get_attributes()
+
+    user = SamlUserService().login(username=username, user_data=user_data)
+
+    # Tokens to be set in cookies
+    request.jwt_token = get_token(user)
+    request.jwt_refresh_token = create_refresh_token(user)
+
+    if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
+        return redirect(auth.redirect_to(request.POST['RelayState']))
+    else:
         return redirect(MsystemsConfig.base_login_redirect)
 
 
@@ -113,6 +111,7 @@ def _handle_acs_logout(request):
 
 # Saml have its own csrf protection, django not needed
 @csrf_exempt
+# This is required as mpass calls this enpoint from iframe
 @xframe_options_exempt
 @jwt_cookie
 @require_POST
@@ -130,5 +129,5 @@ def acs(request):
 def _validate_relay_state(relay_state):
     # To avoid 'Open Redirect' attacks, before execute the redirection confirm
     # the value of the 'RelayState' is a trusted URL.
-    # Currenly the only valid RelayState base_login_redirect
+    # Currently, the only valid RelayState base_login_redirect
     return relay_state == MsystemsConfig.base_login_redirect
