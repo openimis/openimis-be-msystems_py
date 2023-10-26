@@ -8,7 +8,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from msystems.apps import MsystemsConfig
 from msystems.services import SamlUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings
-from graphql_jwt.decorators import jwt_cookie, delete_cookie
+from graphql_jwt.decorators import jwt_cookie
 from graphql_jwt.shortcuts import get_token, create_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,8 @@ def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
         #  https://github.com/SAML-Toolkits/python3-saml/issues/205
         if "SAMLResponse" in req["post_data"]:
             req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
+        if "SAMLRequest" in req["post_data"]:
+            req['get_data']['SAMLRequest'] = req["post_data"].get("SAMLRequest")
     logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
 
