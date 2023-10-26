@@ -14,7 +14,7 @@ from graphql_jwt.shortcuts import get_token, create_refresh_token
 logger = logging.getLogger(__name__)
 
 
-def _build_auth(request) -> OneLogin_Saml2_Auth:
+def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
     # From python3-saml django example
     req = {
         'https': 'on' if request.is_secure() else 'off',
@@ -25,6 +25,10 @@ def _build_auth(request) -> OneLogin_Saml2_Auth:
         # 'lowercase_urlencoding': True,
         'post_data': request.POST.copy()
     }
+    if slo_workaround:
+        #  https://github.com/SAML-Toolkits/python3-saml/issues/205
+        if "SAMLResponse" in req["post_data"]:
+            req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
     logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
 
@@ -55,7 +59,8 @@ def metadata(request):
     return resp
 
 
-def _handle_acs_login(request, auth):
+def _handle_acs_login(request):
+    auth = _build_auth(request)
     auth.process_response()
     errors = auth.get_errors()
 
@@ -81,8 +86,10 @@ def _handle_acs_login(request, auth):
         return redirect(MsystemsConfig.base_login_redirect)
 
 
-def _handle_acs_logout(request, auth):
-    auth.process_slo()
+def _handle_acs_logout(request):
+    auth = _build_auth(request)
+    # We do not use local session, we are telling the lib not to touch it
+    auth.process_slo(keep_local_session=True)
     errors = auth.get_errors()
 
     if not errors:
@@ -108,14 +115,12 @@ def _handle_acs_logout(request, auth):
 @jwt_cookie
 @require_POST
 def acs(request):
-    auth = _build_auth(request)
-
     if 'SAMLResponse' in request.POST:
         # Probably login response
-        return _handle_acs_login(request, auth)
+        return _handle_acs_login(request)
     elif 'SAMLRequest' in request.POST:
         # Probably logout request
-        return _handle_acs_logout(request, auth)
+        return _handle_acs_logout(request)
     else:
         return HttpResponseBadRequest("Missing SAML payload")
 
