@@ -33,7 +33,7 @@ class SamlUserService:
             except BaseException as e:
                 # Extra logging for the development, should be removed for any real data usage
                 # as it will put personal information in logs
-                logger.error("Successful SAML login handling failed, username=%s, user_data=%s", username,
+                logger.debug("Successful SAML login handling failed, username=%s, user_data=%s", username,
                              str(user_data), exc_info=e)
                 raise
 
@@ -85,6 +85,7 @@ class SamlUserService:
         self._add_new_user_policyholders(user, policyholders)
 
     def _parse_legal_entities(self, legal_entities) -> map:
+        # The format of EU is "Name Tax_Number", splitting by the last space
         return map(lambda s: s.rsplit(' ', 1), legal_entities)
 
     def _get_or_create_policy_holder(self, user: User, code: str, name: str) -> PolicyHolder:

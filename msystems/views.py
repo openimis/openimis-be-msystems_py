@@ -62,24 +62,23 @@ def acs(request):
     auth.process_response()
     errors = auth.get_errors()
 
-    if not errors:
-        username = auth.get_nameid()
-        user_data = auth.get_attributes()
-
-        user = SamlUserService().login(username=username, user_data=user_data)
-
-        # Tokens to be set in cookies
-        request.jwt_token = get_token(user)
-        request.jwt_refresh_token = create_refresh_token(user)
-
-        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
-            return redirect(auth.redirect_to(request.POST['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
-    else:
+    if errors:
         logger.error("Login attempt failed: %s\n%s", str(
             errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
+        return redirect(MsystemsConfig.base_login_redirect)
+    username = auth.get_nameid()
+    user_data = auth.get_attributes()
+
+    user = SamlUserService().login(username=username, user_data=user_data)
+
+    # Tokens to be set in cookies
+    request.jwt_token = get_token(user)
+    request.jwt_refresh_token = create_refresh_token(user)
+
+    if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
+        return redirect(auth.redirect_to(request.POST['RelayState']))
+    else:
         return redirect(MsystemsConfig.base_login_redirect)
 
 
@@ -87,25 +86,8 @@ def acs(request):
 @csrf_exempt
 @require_POST
 def sls(request):
-    auth = _build_auth(request)
-    auth.process_slo()
-    errors = auth.get_errors()
-
-    if not errors:
-        username = auth.get_nameid()
-        user_data = auth.get_attributes()
-
-        logger.debug("Logout attempt, username=%s, user_data=%s", username, user_data)
-
-        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
-            return redirect(auth.redirect_to(request.POST['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
-    else:
-        logger.error("Logout attempt failed: %s\n%s", str(
-            errors[-1]), auth.get_last_error_reason())
-        # TODO Add information about failed login attempt for the user
-        return redirect(MsystemsConfig.base_login_redirect)
+    # This will be removed
+    pass
 
 
 def _validate_relay_state(relay_state):
