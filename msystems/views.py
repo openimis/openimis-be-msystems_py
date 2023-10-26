@@ -1,6 +1,6 @@
 import logging
 
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -55,17 +55,12 @@ def metadata(request):
     return resp
 
 
-# Saml have its own csrf protection, django not needed
-@csrf_exempt
-@xframe_options_exempt
-@jwt_cookie
-@require_POST
-def acs(request):
-    auth = _build_auth(request)
+def _handle_acs_login(request, auth):
     auth.process_response()
     errors = auth.get_errors()
 
     if not errors:
+        logger.debug("SAML Login")
         username = auth.get_nameid()
         user_data = auth.get_attributes()
 
@@ -80,7 +75,28 @@ def acs(request):
         else:
             return redirect(MsystemsConfig.base_login_redirect)
     else:
-        logger.error("Login attempt failed: %s\n%s", str(
+        logger.error("SAML Login failed: %s\n%s", str(
+            errors[-1]), auth.get_last_error_reason())
+        # TODO Add information about failed login attempt for the user
+        return redirect(MsystemsConfig.base_login_redirect)
+
+
+def _handle_acs_logout(request, auth):
+    auth.process_slo()
+    errors = auth.get_errors()
+
+    if not errors:
+        logger.debug("SAML Logout")
+
+        request.delete_jwt_cookie = True
+        request.delete_refresh_token_cookie = True
+
+        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
+            return redirect(auth.redirect_to(request.POST['RelayState']))
+        else:
+            return redirect(MsystemsConfig.base_login_redirect)
+    else:
+        logger.error("SAML Logout failed: %s\n%s", str(
             errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
         return redirect(MsystemsConfig.base_login_redirect)
@@ -88,30 +104,20 @@ def acs(request):
 
 # Saml have its own csrf protection, django not needed
 @csrf_exempt
+@xframe_options_exempt
 @jwt_cookie
 @require_POST
-def sls(request):
+def acs(request):
     auth = _build_auth(request)
-    auth.process_slo()
-    errors = auth.get_errors()
 
-    if not errors:
-        username = auth.get_nameid()
-
-        request.delete_jwt_cookie = True
-        request.delete_refresh_token_cookie = True
-
-        logger.debug("Logout attempt, username=%s", username)
-
-        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
-            return redirect(auth.redirect_to(request.POST['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
+    if 'SAMLResponse' in request.POST:
+        # Probably login response
+        return _handle_acs_login(request, auth)
+    elif 'SAMLRequest' in request.POST:
+        # Probably logout request
+        return _handle_acs_logout(request, auth)
     else:
-        logger.error("Logout attempt failed: %s\n%s", str(
-            errors[-1]), auth.get_last_error_reason())
-        # TODO Add information about failed login attempt for the user
-        return redirect(MsystemsConfig.base_login_redirect)
+        return HttpResponseBadRequest("Missing SAML payload")
 
 
 def _validate_relay_state(relay_state):
