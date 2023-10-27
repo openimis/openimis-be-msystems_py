@@ -7,9 +7,10 @@ from django.db import transaction
 from django.db.models import Q
 from secrets import token_hex
 
-from core.models import User, InteractiveUser
+from core.models import User, InteractiveUser, Role, UserRole
 from core.services.userServices import create_or_update_user_districts
 from location.models import Location
+from msystems.apps import MsystemsConfig
 from policyholder.models import PolicyHolder, PolicyHolderUser
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,12 @@ class SamlUserService:
 
         create_or_update_user_districts(i_user, [self.location.parent.parent.id], 0)
 
+        msystem_roles = user_data.get('Role')
+        if msystem_roles:
+            imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
+                             msystem_roles]
+            self._connect_role_with_user(i_user, imis_role_ids)
+
         core_user = User(username=username)
         core_user.i_user = i_user
         core_user.save()
@@ -68,14 +75,16 @@ class SamlUserService:
     def _update_user(self, user: User, user_data: dict) -> None:
         data_first_name = user_data.get('FirstName')[0]
         data_last_name = user_data.get('LastName')[0]
+        msystem_roles = user_data.get('Role')
+        incoming_imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
+                                  msystem_roles]
+        current_user_roles = Role.objects.filter(userrole__user=user.i_user).values_list('is_system', flat=True)
 
-        # For now only first and last name can be updated with saml
-        if user.i_user.other_names != data_first_name \
-                or user.i_user.last_name != data_last_name:
-            user.i_user.save_history()
-            user.i_user.other_names = data_first_name
-            user.i_user.last_name = data_last_name
-            user.i_user.save()
+        # Update first and last name if they are different
+        if user.i_user.other_names != data_first_name or user.i_user.last_name != data_last_name:
+            self._update_user_name(user.i_user, data_first_name, data_last_name)
+        if current_user_roles != incoming_imis_role_ids:
+            self._update_user_roles(user.i_user, incoming_imis_role_ids)
 
     def _update_user_legal_entities(self, user: User, user_data: dict) -> None:
         legal_entities = self._parse_legal_entities(user_data.get('OrganizationAdministrator'))
@@ -83,6 +92,12 @@ class SamlUserService:
 
         self._delete_old_user_policyholders(user, policyholders)
         self._add_new_user_policyholders(user, policyholders)
+
+    def _update_user_name(self, i_user, first_name, last_name):
+        i_user.save_history()
+        i_user.other_names = first_name
+        i_user.last_name = last_name
+        i_user.save()
 
     def _parse_legal_entities(self, legal_entities) -> map:
         # The format of EU is "Name Tax_Number", splitting by the last space
@@ -121,3 +136,22 @@ class SamlUserService:
         for ph in policyholders:
             if ph not in current_policyholders:
                 PolicyHolderUser(user=user, policy_holder=ph).save(username=user.username)
+
+    def _update_user_roles(self, i_user, imis_role_ids):
+        self._remove_previous_user_roles(i_user)
+        self._connect_role_with_user(i_user, imis_role_ids)
+
+    def _connect_role_with_user(self, i_user, imis_role_ids):
+        user_role = UserRole.objects.create(user=i_user, role__in=imis_role_ids)
+        user_role.save()
+
+    def _remove_previous_user_roles(self, i_user):
+        UserRole.objects.filter(user=i_user).delete()
+
+    def _parse_msystem_role_to_imis_role_id(self, msystem_role):
+        role_mapping = {
+            MsystemsConfig.ADMIN: MsystemsConfig.ADMIN_ID,
+            MsystemsConfig.EMPLOYER: MsystemsConfig.EMPLOYER_ID,
+            MsystemsConfig.INSPECTOR: MsystemsConfig.INSPECTOR_ID,
+        }
+        return role_mapping.get(msystem_role, None)
