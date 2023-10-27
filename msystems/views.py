@@ -101,24 +101,23 @@ def _handle_acs_logout(request):
     auth.process_slo(keep_local_session=True)
     errors = auth.get_errors()
 
-    if not errors:
-        request.delete_jwt_cookie = True
-        request.delete_refresh_token_cookie = True
+    if errors:
+        logger.error("SAML Logout failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
+        # TODO Add information about failed logout attempt for the user
+        return redirect(MsystemsConfig.base_login_redirect)
 
-        if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
-            return redirect(auth.redirect_to(request.POST['RelayState']))
-        else:
-            return redirect(MsystemsConfig.base_login_redirect)
+    request.delete_jwt_cookie = True
+    request.delete_refresh_token_cookie = True
+
+    if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
+        return redirect(auth.redirect_to(request.POST['RelayState']))
     else:
-        logger.error("SAML Logout failed: %s\n%s", str(
-            errors[-1]), auth.get_last_error_reason())
-        # TODO Add information about failed login attempt for the user
         return redirect(MsystemsConfig.base_login_redirect)
 
 
 # Saml have its own csrf protection, django not needed
 @csrf_exempt
-# This is required as mpass calls this enpoint from iframe
+# This is required as mpass calls this endpoint from iframe
 @xframe_options_exempt
 @jwt_cookie
 @require_POST
