@@ -5,7 +5,8 @@ example_user_data = {
     'BirthDate': ['1970-01-01'],
     'OrganizationAdministrator': [
         'Test Organisation 1 2345234523452',
-    ]
+    ],
+    'Role': ['Employer']
 }
 
 example_user_data_multiple_ph = {
@@ -15,5 +16,6 @@ example_user_data_multiple_ph = {
     'OrganizationAdministrator': [
         'Test Organisation 1 2345234523452',
         'Test Organisation 2 1234123412341'
-    ]
+    ],
+    'Role': ['Employer']
 }
