@@ -31,7 +31,6 @@ def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
             req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
         if "SAMLRequest" in req["post_data"]:
             req['get_data']['SAMLRequest'] = req["post_data"].get("SAMLRequest")
-    logger.debug("ACS ATTEMPT\n%s", str(req))
     return OneLogin_Saml2_Auth(req, MsystemsConfig.saml_config)
 
 
@@ -103,8 +102,6 @@ def _handle_acs_logout(request):
     errors = auth.get_errors()
 
     if not errors:
-        logger.debug("SAML Logout")
-
         request.delete_jwt_cookie = True
         request.delete_refresh_token_cookie = True
 
