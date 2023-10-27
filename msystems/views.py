@@ -46,16 +46,11 @@ def login(request):
 @require_GET
 @jwt_cookie
 def logout(request):
-    if request.user.is_authenticated:
-        logger.debug("Logout redirect")
-        auth = _build_auth(request)
-        request.delete_jwt_cookie = True
-        request.delete_refresh_token_cookie = True
-        logout_request = auth.logout(name_id=request.user.username)
-        return redirect(logout_request)
-    else:
-        return HttpResponse("Unauthorized", status=401)
-
+    auth = _build_auth(request)
+    request.delete_jwt_cookie = True
+    request.delete_refresh_token_cookie = True
+    logout_request = auth.logout(name_id=request.user.username)
+    return redirect(logout_request)
 
 
 @require_GET
