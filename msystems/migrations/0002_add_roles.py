@@ -15,7 +15,7 @@ def _get_role(role_id):
 
 
 def _create_role(role_id, role_name):
-    role = _get_role(INSPECTOR_ID)
+    role = _get_role(role_id)
     if not role:
         role = Role(is_system=role_id, name=role_name, is_blocked=False)
         role.save()
