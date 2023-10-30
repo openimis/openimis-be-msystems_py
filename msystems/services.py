@@ -142,8 +142,9 @@ class SamlUserService:
         self._connect_role_with_user(i_user, imis_role_ids)
 
     def _connect_role_with_user(self, i_user, imis_role_ids):
-        user_role = UserRole.objects.create(user=i_user, role__in=imis_role_ids)
-        user_role.save()
+        for imis_role_id in imis_role_ids:
+            role = Role.objects.filter(is_system=imis_role_id)
+            UserRole.objects.create(user=i_user, role=role)
 
     def _remove_previous_user_roles(self, i_user):
         UserRole.objects.filter(user=i_user).delete()
