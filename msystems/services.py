@@ -147,7 +147,9 @@ class SamlUserService:
             UserRole.objects.create(user=i_user, role=role)
 
     def _remove_previous_user_roles(self, i_user):
-        UserRole.objects.filter(user=i_user).delete()
+        roles = UserRole.objects.filter(user=i_user)
+        if roles.exists():
+            roles.delete()
 
     def _parse_msystem_role_to_imis_role_id(self, msystem_role):
         role_mapping = {

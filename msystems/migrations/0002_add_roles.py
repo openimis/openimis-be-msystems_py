@@ -23,7 +23,7 @@ def _create_role(role_id, role_name):
 
 def _delete_role(role_id):
     role = _get_role(role_id)
-    if role:
+    if role.exists():
         role.delete()
 
 
