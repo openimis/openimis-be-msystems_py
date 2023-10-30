@@ -26,14 +26,14 @@ class SamlUserServiceTestCase(TestCase):
         self.service.login(username=example_username,
                            user_data=example_user_data)
 
-        user_instance = InteractiveUser.objects.filter(
+        user_qs = InteractiveUser.objects.filter(
             login_name=example_username, validity_to__isnull=True)
 
         self.assertTrue(User.objects.filter(
             username=example_username).exists())
-        self.assertTrue(user_instance.exists())
-        self.assertEquals(UserRole.objects
-                          .filter(user=user_instance).role, Role.objects.filter(is_system=MsystemsConfig.INSPECTOR_ID))
+        self.assertTrue(user_qs.exists())
+        self.assertEquals(UserRole.objects.filter(user=user_qs.first()).first().role,
+                          Role.objects.filter(is_system=MsystemsConfig.EMPLOYER_ID).first())
 
     def test_multiple_logina_data_updated(self):
         self.service.login(username=example_username, user_data=example_user_data)
@@ -51,16 +51,19 @@ class SamlUserServiceTestCase(TestCase):
         active_user = InteractiveUser.objects.filter(login_name=example_username,
                                                      last_name=example_user_data_updated['LastName'][0],
                                                      validity_to__isnull=True)
-        active_role_qs = UserRole.objects.filter(user=active_user, validity_to__isnull=True)
-        deleted_role_qs = UserRole.objects.filter(user=active_user, validity_to__isnull=False)
+        active_role_qs = UserRole.objects.filter(user=active_user.first(), validity_to__isnull=True)
+        deleted_role_qs = UserRole.objects.filter(user=active_user.first(), validity_to__isnull=False)
 
         self.assertTrue(
             InteractiveUser.objects.filter(login_name=example_username, last_name=example_user_data['LastName'][0],
                                            validity_to__isnull=False).exists())
         self.assertTrue(active_user.exists())
         self.assertEquals(active_role_qs.count(), 1)
-        self.assertEquals(deleted_role_qs.count(), 1)
-        self.assertEquals(active_role_qs.role, Role.objects.filter(is_system=MsystemsConfig.INSPECTOR_ID))
+        self.assertEquals(deleted_role_qs.count(), 2)  # due to delete_history() it creates two instances
+        self.assertEquals(
+            active_role_qs.first().role,
+            Role.objects.filter(is_system=MsystemsConfig.INSPECTOR_ID).first()
+        )
 
     def test_multiple_logins_no_data_update(self):
         self.service.login(username=example_username, user_data=example_user_data)
@@ -72,14 +75,14 @@ class SamlUserServiceTestCase(TestCase):
         self.service.login(username=example_username, user_data=example_user_data)
 
         active_user = InteractiveUser.objects.filter(login_name=example_username, validity_to__isnull=True)
-        user_role_qs = UserRole.objects.filter(user=active_user, validity_to__isnull=True)
+        user_role_qs = UserRole.objects.filter(user=active_user.first(), validity_to__isnull=True)
 
         self.assertFalse(InteractiveUser.objects
                          .filter(login_name=example_username, validity_to__isnull=False)
                          .exists())
         self.assertTrue(active_user.exists())
         self.assertEquals(user_role_qs.count(), 1)
-        self.assertEquals(user_role_qs.role, Role.objects.filter(is_system=MsystemsConfig.INSPECTOR_ID))
+        self.assertEquals(user_role_qs.first().role, Role.objects.filter(is_system=MsystemsConfig.EMPLOYER_ID).first())
 
     def test_user_district(self):
         self.service.login(username=example_username, user_data=example_user_data)

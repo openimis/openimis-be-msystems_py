@@ -29,6 +29,7 @@ class SamlUserService:
         with transaction.atomic():
             try:
                 user = self._get_or_create_user(username, user_data)
+                self._update_user_roles(user, user_data)
                 self._update_user_legal_entities(user, user_data)
                 return user
             except BaseException as e:
@@ -61,12 +62,6 @@ class SamlUserService:
 
         create_or_update_user_districts(i_user, [self.location.parent.parent.id], 0)
 
-        msystem_roles = user_data.get('Role')
-        if msystem_roles:
-            imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
-                             msystem_roles]
-            self._connect_role_with_user(i_user, imis_role_ids)
-
         core_user = User(username=username)
         core_user.i_user = i_user
         core_user.save()
@@ -75,16 +70,10 @@ class SamlUserService:
     def _update_user(self, user: User, user_data: dict) -> None:
         data_first_name = user_data.get('FirstName')[0]
         data_last_name = user_data.get('LastName')[0]
-        msystem_roles = user_data.get('Role')
-        incoming_imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
-                                  msystem_roles]
-        current_user_roles = Role.objects.filter(userrole__user=user.i_user).values_list('is_system', flat=True)
 
         # Update first and last name if they are different
         if user.i_user.other_names != data_first_name or user.i_user.last_name != data_last_name:
             self._update_user_name(user.i_user, data_first_name, data_last_name)
-        if current_user_roles != incoming_imis_role_ids:
-            self._update_user_roles(user.i_user, incoming_imis_role_ids)
 
     def _update_user_legal_entities(self, user: User, user_data: dict) -> None:
         legal_entities = self._parse_legal_entities(user_data.get('OrganizationAdministrator'))
@@ -92,6 +81,16 @@ class SamlUserService:
 
         self._delete_old_user_policyholders(user, policyholders)
         self._add_new_user_policyholders(user, policyholders)
+
+    def _update_user_roles(self, user, user_data):
+        msystem_roles = user_data.get('Role')
+        current_user_roles = Role.objects.filter(user_roles__user=user.i_user).values_list('is_system', flat=True)
+        current_user_roles_list = list(current_user_roles)
+        incoming_imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
+                                  msystem_roles]
+
+        if current_user_roles_list != incoming_imis_role_ids:
+            self._update_roles(user.i_user, incoming_imis_role_ids)
 
     def _update_user_name(self, i_user, first_name, last_name):
         i_user.save_history()
@@ -137,19 +136,20 @@ class SamlUserService:
             if ph not in current_policyholders:
                 PolicyHolderUser(user=user, policy_holder=ph).save(username=user.username)
 
-    def _update_user_roles(self, i_user, imis_role_ids):
+    def _update_roles(self, i_user, imis_role_ids):
         self._remove_previous_user_roles(i_user)
         self._connect_role_with_user(i_user, imis_role_ids)
 
     def _connect_role_with_user(self, i_user, imis_role_ids):
         for imis_role_id in imis_role_ids:
-            role = Role.objects.filter(is_system=imis_role_id)
+            role = Role.objects.filter(is_system=imis_role_id).first()
             UserRole.objects.create(user=i_user, role=role)
 
     def _remove_previous_user_roles(self, i_user):
         roles = UserRole.objects.filter(user=i_user)
         if roles.exists():
-            roles.delete()
+            for role in roles:
+                role.delete_history()
 
     def _parse_msystem_role_to_imis_role_id(self, msystem_role):
         role_mapping = {
