@@ -94,14 +94,10 @@ class MsystemsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'msystems'
 
-    ##### DO NOT  CHANGE THAT ####
+    ##### DO NOT  CHANGE THIS ####
     ADMIN = 'Admin'
     INSPECTOR = 'Inspector'
     EMPLOYER = 'Employer'
-
-    ADMIN_ID = 64
-    INSPECTOR_ID = 4194304
-    EMPLOYER_ID = 8388608
     ##### ------------------ ####
 
     saml_config = None

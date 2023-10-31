@@ -4,37 +4,35 @@ from django.db import migrations
 
 from core.models import Role
 
-INSPECTOR_ID = 4194304
-EMPLOYER_ID = 8388608
 ROLE_NAME_INSPECTOR = "Inspector"
 ROLE_NAME_EMPLOYER = "Employer"
 
 
-def _get_role(role_id):
-    return Role.objects.filter(is_system=role_id).first()
+def _get_role(role_name):
+    return Role.objects.filter(name=role_name).first()
 
 
-def _create_role(role_id, role_name):
-    role = _get_role(role_id)
+def _create_role(role_name):
+    role = _get_role(role_name)
     if not role:
-        role = Role(is_system=role_id, name=role_name, is_blocked=False)
+        role = Role(name=role_name, is_blocked=False, is_system=0)
         role.save()
 
 
-def _delete_role(role_id):
-    role = _get_role(role_id)
+def _delete_role(role_name):
+    role = _get_role(role_name)
     if role:
         role.delete()
 
 
 def on_migration(apps, schema_editor):
-    _create_role(INSPECTOR_ID, ROLE_NAME_INSPECTOR)
-    _create_role(EMPLOYER_ID, ROLE_NAME_EMPLOYER)
+    _create_role(ROLE_NAME_INSPECTOR)
+    _create_role(ROLE_NAME_EMPLOYER)
 
 
 def on_migration_reverse(apps, schema_editor):
-    _delete_role(INSPECTOR_ID)
-    _delete_role(EMPLOYER_ID)
+    _delete_role(ROLE_NAME_INSPECTOR)
+    _delete_role(ROLE_NAME_EMPLOYER)
 
 
 class Migration(migrations.Migration):

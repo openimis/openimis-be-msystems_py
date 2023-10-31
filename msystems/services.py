@@ -82,14 +82,10 @@ class SamlUserService:
         self._add_new_user_policyholders(user, policyholders)
 
     def _update_user_roles(self, user, user_data):
-        msystem_roles = user_data.get('Role')
-        current_user_roles = Role.objects.filter(user_roles__user=user.i_user).values_list('is_system', flat=True)
-        current_user_roles_list = list(current_user_roles)
-        incoming_imis_role_ids = [self._parse_msystem_role_to_imis_role_id(msystem_role_id) for msystem_role_id in
-                                  msystem_roles]
+        msystem_roles_list = user_data.get('Role')
 
-        if current_user_roles_list != incoming_imis_role_ids:
-            self._update_roles(user.i_user, incoming_imis_role_ids)
+        self._delete_old_user_roles(user, msystem_roles_list)
+        self._add_new_user_roles(user, msystem_roles_list)
 
     def _update_user_name(self, i_user, first_name, last_name):
         i_user.save_history()
@@ -128,6 +124,10 @@ class SamlUserService:
         for phu in PolicyHolderUser.objects.filter(~Q(policy_holder__in=policyholders), user=user, is_deleted=False):
             phu.delete(username=user.username)
 
+    def _delete_old_user_roles(self, user: User, roles: List[str]):
+        for user_role in UserRole.objects.filter(~Q(role__name__in=roles), user=user.i_user, validity_to__isnull=True):
+            user_role.delete_history()
+
     def _add_new_user_policyholders(self, user: User, policyholders: List[PolicyHolder]):
         current_policyholders = (PolicyHolder.objects.filter(policyholderuser__user=user,
                                                              policyholderuser__is_deleted=False, is_deleted=False))
@@ -135,13 +135,20 @@ class SamlUserService:
             if ph not in current_policyholders:
                 PolicyHolderUser(user=user, policy_holder=ph).save(username=user.username)
 
+    def _add_new_user_roles(self, user: User, roles: List[str]):
+        current_user_roles = UserRole.objects.filter(user=user.i_user, validity_to__isnull=True)
+        for role in roles:
+            parsed_role = self._parse_msystem_role_to_imis_role(role)
+            if not current_user_roles.filter(role=parsed_role).exists():
+                UserRole(user=user.i_user, role=parsed_role).save()
+
     def _update_roles(self, i_user, imis_role_ids):
         self._remove_previous_user_roles(i_user)
         self._connect_role_with_user(i_user, imis_role_ids)
 
-    def _connect_role_with_user(self, i_user, imis_role_ids):
-        for imis_role_id in imis_role_ids:
-            role = Role.objects.filter(is_system=imis_role_id).first()
+    def _connect_role_with_user(self, i_user, role_names):
+        for role_name in role_names:
+            role = Role.objects.filter(name=role_name).first()
             UserRole.objects.create(user=i_user, role=role)
 
     def _remove_previous_user_roles(self, i_user):
@@ -150,10 +157,5 @@ class SamlUserService:
             for role in roles:
                 role.delete_history()
 
-    def _parse_msystem_role_to_imis_role_id(self, msystem_role):
-        role_mapping = {
-            MsystemsConfig.ADMIN: MsystemsConfig.ADMIN_ID,
-            MsystemsConfig.EMPLOYER: MsystemsConfig.EMPLOYER_ID,
-            MsystemsConfig.INSPECTOR: MsystemsConfig.INSPECTOR_ID,
-        }
-        return role_mapping.get(msystem_role, None)
+    def _parse_msystem_role_to_imis_role(self, msystem_role):
+        return Role.objects.filter(name=msystem_role).first()
