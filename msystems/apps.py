@@ -98,6 +98,7 @@ class MsystemsConfig(AppConfig):
     ADMIN = 'Admin'
     INSPECTOR = 'Inspector'
     EMPLOYER = 'Employer'
+    IMIS_ADMIN = 'IMIS Administrator'
     ##### ------------------ ####
 
     saml_config = None
