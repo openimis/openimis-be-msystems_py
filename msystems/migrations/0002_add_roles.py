@@ -2,8 +2,6 @@
 
 from django.db import migrations
 
-from core.models import Role
-
 ROLE_NAME_INSPECTOR = "Inspector"
 ROLE_NAME_EMPLOYER = "Employer"
 
@@ -15,7 +13,7 @@ def _get_role(role_name, role_model):
 def _create_role(role_name, role_model):
     role = _get_role(role_name, role_model)
     if not role:
-        role = Role(name=role_name, is_blocked=False, is_system=0)
+        role = role_model(name=role_name, is_blocked=False, is_system=0)
         role.save()
 
 
