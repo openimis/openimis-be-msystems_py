@@ -6,6 +6,8 @@ from core import datetime
 from django.db import transaction
 from django.db.models import Q
 from secrets import token_hex
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from core.models import User, InteractiveUser, Role, UserRole
 from core.services.userServices import create_or_update_user_districts
@@ -84,6 +86,9 @@ class SamlUserService:
     def _update_user_roles(self, user, user_data):
         msystem_roles_list = user_data.get('Role')
 
+        for role in msystem_roles_list:
+            self._validate_incoming_roles(role)
+
         self._delete_old_user_roles(user, msystem_roles_list)
         self._add_new_user_roles(user, msystem_roles_list)
 
@@ -158,4 +163,11 @@ class SamlUserService:
                 role.delete_history()
 
     def _parse_msystem_role_to_imis_role(self, msystem_role):
-        return Role.objects.filter(name=msystem_role).first()
+        role_string = msystem_role
+        if msystem_role == MsystemsConfig.ADMIN:
+            role_string = MsystemsConfig.IMIS_ADMIN
+        return Role.objects.filter(name=role_string).first()
+
+    def _validate_incoming_roles(self, role):
+        if role not in [MsystemsConfig.ADMIN, MsystemsConfig.EMPLOYER, MsystemsConfig.INSPECTOR]:
+            raise ValidationError(_("role_validation.unknown_role"))
