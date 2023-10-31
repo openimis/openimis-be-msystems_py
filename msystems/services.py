@@ -7,9 +7,10 @@ from django.db import transaction
 from django.db.models import Q
 from secrets import token_hex
 
-from core.models import User, InteractiveUser
+from core.models import User, InteractiveUser, Role, UserRole
 from core.services.userServices import create_or_update_user_districts
 from location.models import Location
+from msystems.apps import MsystemsConfig
 from policyholder.models import PolicyHolder, PolicyHolderUser
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class SamlUserService:
             try:
                 logger.debug("Successful SAML login, username=%s, user_data=%s", username, str(user_data))
                 user = self._get_or_create_user(username, user_data)
+                self._update_user_roles(user, user_data)
                 self._update_user_legal_entities(user, user_data)
                 return user
             except BaseException as e:
@@ -68,13 +70,9 @@ class SamlUserService:
         data_first_name = user_data.get('FirstName')[0]
         data_last_name = user_data.get('LastName')[0]
 
-        # For now only first and last name can be updated with saml
-        if user.i_user.other_names != data_first_name \
-                or user.i_user.last_name != data_last_name:
-            user.i_user.save_history()
-            user.i_user.other_names = data_first_name
-            user.i_user.last_name = data_last_name
-            user.i_user.save()
+        # Update first and last name if they are different
+        if user.i_user.other_names != data_first_name or user.i_user.last_name != data_last_name:
+            self._update_user_name(user.i_user, data_first_name, data_last_name)
 
     def _update_user_legal_entities(self, user: User, user_data: dict) -> None:
         legal_entities = self._parse_legal_entities(user_data.get('OrganizationAdministrator'))
@@ -82,6 +80,18 @@ class SamlUserService:
 
         self._delete_old_user_policyholders(user, policyholders)
         self._add_new_user_policyholders(user, policyholders)
+
+    def _update_user_roles(self, user, user_data):
+        msystem_roles_list = user_data.get('Role')
+
+        self._delete_old_user_roles(user, msystem_roles_list)
+        self._add_new_user_roles(user, msystem_roles_list)
+
+    def _update_user_name(self, i_user, first_name, last_name):
+        i_user.save_history()
+        i_user.other_names = first_name
+        i_user.last_name = last_name
+        i_user.save()
 
     def _parse_legal_entities(self, legal_entities) -> map:
         # The format of EU is "Name Tax_Number", splitting by the last space
@@ -114,9 +124,38 @@ class SamlUserService:
         for phu in PolicyHolderUser.objects.filter(~Q(policy_holder__in=policyholders), user=user, is_deleted=False):
             phu.delete(username=user.username)
 
+    def _delete_old_user_roles(self, user: User, roles: List[str]):
+        for user_role in UserRole.objects.filter(~Q(role__name__in=roles), user=user.i_user, validity_to__isnull=True):
+            user_role.delete_history()
+
     def _add_new_user_policyholders(self, user: User, policyholders: List[PolicyHolder]):
         current_policyholders = (PolicyHolder.objects.filter(policyholderuser__user=user,
                                                              policyholderuser__is_deleted=False, is_deleted=False))
         for ph in policyholders:
             if ph not in current_policyholders:
                 PolicyHolderUser(user=user, policy_holder=ph).save(username=user.username)
+
+    def _add_new_user_roles(self, user: User, roles: List[str]):
+        current_user_roles = UserRole.objects.filter(user=user.i_user, validity_to__isnull=True)
+        for role in roles:
+            parsed_role = self._parse_msystem_role_to_imis_role(role)
+            if not current_user_roles.filter(role=parsed_role).exists():
+                UserRole(user=user.i_user, role=parsed_role).save()
+
+    def _update_roles(self, i_user, imis_role_ids):
+        self._remove_previous_user_roles(i_user)
+        self._connect_role_with_user(i_user, imis_role_ids)
+
+    def _connect_role_with_user(self, i_user, role_names):
+        for role_name in role_names:
+            role = Role.objects.filter(name=role_name).first()
+            UserRole.objects.create(user=i_user, role=role)
+
+    def _remove_previous_user_roles(self, i_user):
+        roles = UserRole.objects.filter(user=i_user)
+        if roles.exists():
+            for role in roles:
+                role.delete_history()
+
+    def _parse_msystem_role_to_imis_role(self, msystem_role):
+        return Role.objects.filter(name=msystem_role).first()
