@@ -13,7 +13,7 @@ def _get_role(role_name, role_model):
 
 
 def _create_role(role_name, role_model):
-    role = _get_role(role_name)
+    role = _get_role(role_name, role_model)
     if not role:
         role = Role(name=role_name, is_blocked=False, is_system=0)
         role.save()
