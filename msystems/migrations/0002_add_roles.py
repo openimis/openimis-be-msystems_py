@@ -8,31 +8,33 @@ ROLE_NAME_INSPECTOR = "Inspector"
 ROLE_NAME_EMPLOYER = "Employer"
 
 
-def _get_role(role_name):
-    return Role.objects.filter(name=role_name).first()
+def _get_role(role_name, role_model):
+    return role_model.objects.filter(name=role_name).first()
 
 
-def _create_role(role_name):
+def _create_role(role_name, role_model):
     role = _get_role(role_name)
     if not role:
         role = Role(name=role_name, is_blocked=False, is_system=0)
         role.save()
 
 
-def _delete_role(role_name):
-    role = _get_role(role_name)
+def _delete_role(role_name, role_model):
+    role = _get_role(role_name, role_model)
     if role:
         role.delete()
 
 
 def on_migration(apps, schema_editor):
-    _create_role(ROLE_NAME_INSPECTOR)
-    _create_role(ROLE_NAME_EMPLOYER)
+    role_model = apps.get_model("core", "role")
+    _create_role(ROLE_NAME_INSPECTOR, role_model)
+    _create_role(ROLE_NAME_EMPLOYER, role_model)
 
 
 def on_migration_reverse(apps, schema_editor):
-    _delete_role(ROLE_NAME_INSPECTOR)
-    _delete_role(ROLE_NAME_EMPLOYER)
+    role_model = apps.get_model("core", "role")
+    _delete_role(ROLE_NAME_INSPECTOR, role_model)
+    _delete_role(ROLE_NAME_EMPLOYER, role_model)
 
 
 class Migration(migrations.Migration):
