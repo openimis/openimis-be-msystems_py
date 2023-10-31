@@ -1,0 +1,20 @@
+msgid "resident_national_id_not_valid"
+msgstr "Worker national id not valid."
+
+msgid "organization_national_id_not_valid"
+msgstr "Organization national id not valid."
+
+msgid "vehicle_national_id_not_valid"
+msgstr "Vehicle national id not valid."
+
+msgid "resident_national_id_checksum_not_valid"
+msgstr "Worker national id checksum not valid."
+
+msgid "organization_national_id_checksum_not_valid"
+msgstr "Organization national id checksum not valid."
+
+msgid "vehicle_national_id_checksum_not_valid"
+msgstr "Vehicle national id checksum not valid."
+
+msgid "role_validation.unknown_role"
+msgstr "Unknown role coming from mPass."
