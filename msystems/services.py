@@ -28,13 +28,12 @@ class SamlUserService:
     def login(self, username: str, user_data: dict):
         with transaction.atomic():
             try:
+                logger.debug("Successful SAML login, username=%s, user_data=%s", username, str(user_data))
                 user = self._get_or_create_user(username, user_data)
                 self._update_user_roles(user, user_data)
                 self._update_user_legal_entities(user, user_data)
                 return user
             except BaseException as e:
-                # Extra logging for the development, should be removed for any real data usage
-                # as it will put personal information in logs
                 logger.debug("Successful SAML login handling failed, username=%s, user_data=%s", username,
                              str(user_data), exc_info=e)
                 raise
