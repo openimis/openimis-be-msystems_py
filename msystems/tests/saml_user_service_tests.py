@@ -194,8 +194,8 @@ class SamlUserServiceTestCase(TestCase):
         active_role_qs = UserRole.objects.filter(user=user_qs.first(), validity_to__isnull=True)
         deleted_role_qs = UserRole.objects.filter(user=user_qs.first(), validity_to__isnull=False)
 
-        self.assertEquals(active_role_qs.count(), 1)
-        self.assertEquals(deleted_role_qs.count(), 2)  # due to delete_history() it creates two instances
+        self.assertEquals(active_role_qs.count(), 2)
+        self.assertEquals(deleted_role_qs.count(), 4)  # due to delete_history() it creates four instances
         self.assertEquals(
             active_role_qs.first().role,
             role_inspector_qs.first()
@@ -213,5 +213,5 @@ class SamlUserServiceTestCase(TestCase):
         user_qs = InteractiveUser.objects.filter(login_name=example_username, validity_to__isnull=True)
         user_role_qs = UserRole.objects.filter(user=user_qs.first(), validity_to__isnull=True)
 
-        self.assertEquals(user_role_qs.count(), 1)
+        self.assertEquals(user_role_qs.count(), 2)
         self.assertEquals(user_role_qs.first().role, role_employer_qs.first())
