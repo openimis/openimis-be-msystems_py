@@ -142,10 +142,13 @@ class SamlUserService:
 
     def _add_new_user_roles(self, user: User, roles: List[str]):
         current_user_roles = UserRole.objects.filter(user=user.i_user, validity_to__isnull=True)
-        for role in roles:
-            parsed_role = self._parse_msystem_role_to_imis_role(role)
-            if not current_user_roles.filter(role=parsed_role).exists():
-                UserRole(user=user.i_user, role=parsed_role).save()
+
+        parsed_roles = [parsed_role for role in roles for parsed_role in self._parse_msystem_role_to_imis_role(role)]
+
+        new_roles = [parsed_role for parsed_role in parsed_roles if
+                     not current_user_roles.filter(role=parsed_role).exists()]
+
+        UserRole.objects.bulk_create([UserRole(user=user.i_user, role=role) for role in new_roles])
 
     def _update_roles(self, i_user, imis_role_ids):
         self._remove_previous_user_roles(i_user)
@@ -163,10 +166,13 @@ class SamlUserService:
                 role.delete_history()
 
     def _parse_msystem_role_to_imis_role(self, msystem_role):
-        role_string = msystem_role
-        if msystem_role == MsystemsConfig.ADMIN:
-            role_string = MsystemsConfig.IMIS_ADMIN
-        return Role.objects.filter(name=role_string).first()
+        role_mapping = {
+            MsystemsConfig.ADMIN: [MsystemsConfig.IMIS_ADMIN, MsystemsConfig.ENROLMENT_OFFICER],
+            MsystemsConfig.EMPLOYER: [MsystemsConfig.EMPLOYER, MsystemsConfig.ENROLMENT_OFFICER],
+            MsystemsConfig.INSPECTOR: [MsystemsConfig.INSPECTOR, MsystemsConfig.ENROLMENT_OFFICER],
+        }
+
+        return [Role.objects.get(name=imis_role) for imis_role in role_mapping.get(msystem_role, [])]
 
     def _validate_incoming_roles(self, role):
         if role not in [MsystemsConfig.ADMIN, MsystemsConfig.EMPLOYER, MsystemsConfig.INSPECTOR]:
