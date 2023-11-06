@@ -47,4 +47,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(on_migration, on_reverse_migration),
     ]
