@@ -57,7 +57,8 @@ class SamlUserService:
             audit_user_id=0,
             is_associated=False,
             private_key=token_hex(128),
-            password="locked"  # this is password hash, it means no password will match
+            password="locked",  # this is password hash, it means no password will match
+            role_id=0
         )
         i_user.save()
 
