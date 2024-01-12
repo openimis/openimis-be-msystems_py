@@ -26,6 +26,7 @@ setup(
         'openimis-be-core',
         'openimis-be-location',
         'openimis-be-policyholder',
+        'lxml<5.0.0'
         'python3-saml>=1.15.0'
     ],
     classifiers=[
