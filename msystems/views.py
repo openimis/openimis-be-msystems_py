@@ -76,6 +76,19 @@ def _handle_acs_login(request):
     errors = auth.get_errors()
 
     if errors:
+        logger.error("DEBUG")
+
+        req = {
+            'https': 'on' if request.is_secure() else 'off',
+            'http_host': request.META['HTTP_HOST'],
+            'script_name': request.META['PATH_INFO'],
+            'get_data': request.GET.copy(),
+            # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
+            # 'lowercase_urlencoding': True,
+            'post_data': request.POST.copy()
+        }
+
+        logger.error("req: %s", str(req))
         logger.error("SAML Login failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
         return redirect(MsystemsConfig.base_login_redirect)
