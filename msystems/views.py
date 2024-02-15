@@ -87,7 +87,7 @@ def _handle_acs_login(request):
             # 'lowercase_urlencoding': True,
             'post_data': request.POST.copy()
         }
-
+        logger.error("headers: %s", str(request.META))
         logger.error("req: %s", str(req))
         logger.error("SAML Login failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
