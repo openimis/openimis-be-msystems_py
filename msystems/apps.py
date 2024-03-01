@@ -1,10 +1,6 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
-    # Requires mpass_config and mpass_login_redirect to be filled correctly
-    'enable_mpass': False,
-    # Requires wsgi server, wont work on development server
-    'enable_mpay': True,
     # URL to be redirected to after successful login
     'mpass_login_redirect': "",
     # Mpass configurations
@@ -66,10 +62,10 @@ DEFAULT_CFG = {
         'mpay_cert': "",
         # Default account info for voucher payments
         'mpay_destination_account': {
-            'BankCode': "Code",
-            'BankFiscalCode': "FiscalCode",
-            'BankAccount': "Account",
-            'BeneficiaryName': "Beneficiary"
+            'BankCode': "",
+            'BankFiscalCode': "",
+            'BankAccount': "",
+            'BeneficiaryName': ""
         }
     }
 }
@@ -87,11 +83,9 @@ class MsystemsConfig(AppConfig):
     ENROLMENT_OFFICER = 'Enrolment Officer'
     ##### ------------------ ####
 
-    enable_mpass = False
     mpass_config = None
     mpass_login_redirect = None
 
-    enable_mpay = False
     mpay_config = None
 
     def ready(self):

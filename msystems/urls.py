@@ -1,7 +1,6 @@
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
 
-from msystems.apps import MsystemsConfig
 from msystems.views import mpass, mpay
 
 saml_urls = [
@@ -11,10 +10,7 @@ saml_urls = [
     path("acs/", mpass.acs),
 ]
 
-urlpatterns = []
-
-if MsystemsConfig.enable_mpass:
-    urlpatterns += [path("saml/", include(saml_urls))]
-
-if MsystemsConfig.enable_mpay:
-    urlpatterns += [path("mpay/", csrf_exempt(mpay.mpay_app))]
+urlpatterns = [
+    path("saml/", include(saml_urls)),
+    path("mpay/", csrf_exempt(mpay.mpay_app))
+]
