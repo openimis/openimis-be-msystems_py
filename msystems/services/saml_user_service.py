@@ -126,7 +126,7 @@ class SamlUserService:
             policyholder.trade_name = name
             policyholder.save(username=user.username)
 
-    def _delete_old_user_policyholders(self, user: User, policyholders: List[PolicyHolder] ):
+    def _delete_old_user_policyholders(self, user: User, policyholders: List[PolicyHolder]):
         for phu in PolicyHolderUser.objects.filter(~Q(policy_holder__in=policyholders), user=user, is_deleted=False):
             phu.delete(username=user.username)
 

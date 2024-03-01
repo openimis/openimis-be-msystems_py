@@ -1,18 +1,23 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
+    # Requires mpass_config and mpass_login_redirect to be filled correctly
+    'enable_mpass': False,
+    # Requires wsgi server, wont work on development server
+    'enable_mpay': True,
     # URL to be redirected to after successful login
-    'base_login_redirect': "",
-    'saml_config': {
+    'mpass_login_redirect': "",
+    # Mpass configurations
+    'mpass_config': {
         # Strict mode: SAML responses must be validated strictly.
         "strict": True,
         # Set this to True for debugging purposes.
         "debug": False,
-        # Service provider settinhs
+        # Service provider settings
         "sp": {
             # entityId, acs and sls urls are validated by IdP
             "entityId": "",
-            # callback url for login attemps
+            # callback url for login attempts
             "assertionConsumerService": {
                 "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
@@ -23,24 +28,18 @@ DEFAULT_CFG = {
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
             },
             # X509 certificate for the SP, PEM string format
-            # -----BEGIN CERTIFICATE-----
-            # some base 64 string
-            # -----END CERTIFICATE-----
             "x509cert": "",
             # RSA private key, PEM string format
-            # -----BEGIN PRIVATE KEY-----
-            # some base 64 string
-            # -----END PRIVATE KEY-----
             "privateKey": ""
         },
         "idp": {
             "entityId": "",
-            # login endpoint to redirect to
+            # login endpoint to redirect to from openIMIS
             "singleSignOnService": {
                 "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
             },
-            # endpoint to call after logout from openimis
+            # endpoint to call after logout from openIMIS
             "singleLogoutService": {
                 "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
@@ -48,44 +47,30 @@ DEFAULT_CFG = {
             # Idp public X509 certificate
             "x509cert": ""
         },
-
-        # Advanced security options, comment out for default
+        # Advanced security options
         "security": {
-            # "nameIdEncrypted": false,
             "authnRequestsSigned": True,
             "logoutRequestSigned": True,
             "logoutResponseSigned": True,
             "signMetadata": True,
-            # "wantMessagesSigned": false,
-            # "wantAssertionsSigned": false,
-            # "wantNameId": true,
-            # "wantNameIdEncrypted": false,
-            # "wantAssertionsEncrypted": false,
-            # "allowSingleLabelDomains": false,
-            # "signatureAlgorithm": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
-            # "digestAlgorithm": "http://www.w3.org/2001/04/xmlenc#sha256",
-            # "rejectDeprecatedAlgorithm": true
         },
-
-        # TODO
-        # Additional info for metadata
-        # "contactPerson": {
-        #     "technical": {
-        #         "givenName": "technical_name",
-        #         "emailAddress": "technical@example.com"
-        #     },
-        #     "support": {
-        #         "givenName": "support_name",
-        #         "emailAddress": "support@example.com"
-        #     }
-        # },
-        # "organization": {
-        #     "en-US": {
-        #         "name": "sp_test",
-        #         "displayname": "SP test",
-        #         "url": "http://sp.example.com"
-        #     }
-        # }
+    },
+    # Mpay configurations
+    'mpay_config': {
+        'service_id': "SERVICE1",
+        # The same as mpass cert
+        'service_certificate': "",
+        # The same as mpass private key
+        'service_private_key': "",
+        # Mpay certificate, PEM string format
+        'mpay_cert': "",
+        # Default account info for voucher payments
+        'mpay_destination_account': {
+            'BankCode': "Code",
+            'BankFiscalCode': "FiscalCode",
+            'BankAccount': "Account",
+            'BeneficiaryName': "Beneficiary"
+        }
     }
 }
 
@@ -102,8 +87,12 @@ class MsystemsConfig(AppConfig):
     ENROLMENT_OFFICER = 'Enrolment Officer'
     ##### ------------------ ####
 
-    saml_config = None
-    base_login_redirect = None
+    enable_mpass = False
+    mpass_config = None
+    mpass_login_redirect = None
+
+    enable_mpay = False
+    mpay_config = None
 
     def ready(self):
         from core.models import ModuleConfiguration
