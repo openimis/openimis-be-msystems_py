@@ -81,7 +81,6 @@ def _validate_envelope(ctx):
     expires_dt = datetime.datetime.fromisoformat(expires.text)
 
     if created_dt > now:
-        print(created_dt, now)
         raise Fault(faultcode='InvalidRequest', faultstring='Created timestamp is in the future')
     if expires_dt < now:
         raise Fault(faultcode='InvalidRequest', faultstring='Envelope has expired')
