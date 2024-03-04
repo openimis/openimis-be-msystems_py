@@ -29,7 +29,7 @@ setup(
         'lxml==4.9.3',
         'xmlsec==1.3.12',
         'python3-saml==1.16.0',
-        'zeep==4.2.1'
+        'zeep==4.2.1',
         'spyne==2.14.0',
     ],
     classifiers=[
