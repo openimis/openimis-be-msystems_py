@@ -30,7 +30,7 @@ DEFAULT_CFG = {
         },
         "idp": {
             "entityId": "",
-            # login endpoint to redirect to from openIMIS
+            # login endpoint to redirect from openIMIS
             "singleSignOnService": {
                 "url": "",
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
