@@ -59,7 +59,7 @@ DEFAULT_CFG = {
         # The same as mpass private key
         'service_private_key': "",
         # Mpay certificate, PEM string format
-        'mpay_cert': "",
+        'mpay_certificate': "",
         # Default account info for voucher payments
         'mpay_destination_account': {
             'BankCode': "",
@@ -67,6 +67,16 @@ DEFAULT_CFG = {
             'BankAccount': "",
             'BeneficiaryName': ""
         }
+    },
+    # Mconnect configurations
+    'mconnect_config': {
+        'url': "",
+        # The same as mpass cert
+        'service_certificate': "",
+        # The same as mpass private key
+        'service_private_key': "",
+        # Mconnect certificate, PEM string format
+        'mconnect_certificate': ""
     }
 }
 
@@ -87,6 +97,8 @@ class MsystemsConfig(AppConfig):
     mpass_login_redirect = None
 
     mpay_config = None
+
+    mconnect_config = None
 
     def ready(self):
         from core.models import ModuleConfiguration

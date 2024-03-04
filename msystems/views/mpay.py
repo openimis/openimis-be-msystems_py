@@ -1,6 +1,5 @@
 import decimal
 import logging
-import datetime as py_datetime
 
 from lxml import etree
 from django.db import transaction
@@ -12,24 +11,27 @@ from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
 from zeep.exceptions import SignatureVerificationFailed
 
-from core import datetime
 from invoice.apps import InvoiceConfig
 from invoice.models import Bill
 from msystems.apps import MsystemsConfig
 from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, OrderLine, OrderDetails, \
     PaymentConfirmation, PaymentAccount, OrderStatus
-from msystems.services.xml_signature import sign_envelope, verify_envelope
+from msystems.xml_utils import add_signature, verify_signature, verify_timestamp, add_timestamp
 from worker_voucher.models import WorkerVoucher
 
 namespace = 'https://zilieri.gov.md'
 logger = logging.getLogger(__name__)
 
-ns_envelope = "http://schemas.xmlsoap.org/soap/envelope/"
-ns_wss_util = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
-ns_wss_s = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
-
-created_xpath = f"./{{{ns_envelope}}}Header/{{{ns_wss_s}}}Security/{{{ns_wss_util}}}Timestamp/{{{ns_wss_util}}}Created"
-expires_xpath = f"./{{{ns_envelope}}}Header/{{{ns_wss_s}}}Security/{{{ns_wss_util}}}Timestamp/{{{ns_wss_util}}}Expires"
+_order_status_map = {
+    Bill.Status.DRAFT: OrderStatus.Expired,
+    Bill.Status.VALIDATED: OrderStatus.Active,
+    Bill.Status.PAID: OrderStatus.Paid,
+    Bill.Status.CANCELLED: OrderStatus.Canceled,
+    Bill.Status.DELETED: OrderStatus.Canceled,
+    Bill.Status.SUSPENDED: OrderStatus.Canceled,
+    Bill.Status.UNPAID: OrderStatus.Expired,
+    Bill.Status.RECONCILIATED: OrderStatus.Paid
+}
 
 
 def _check_service_id(service_id):
@@ -68,26 +70,13 @@ def _get_voucher(bill_item):
 def _validate_envelope(ctx):
     root = ctx.in_document
 
-    now = datetime.datetime.from_ad_datetime(py_datetime.datetime.now(tz=py_datetime.timezone.utc))
-
-    created = root.find(created_xpath)
-    if created is None:
-        raise Fault(faultcode='InvalidRequest', faultstring='Created timestamp not found')
-    created_dt = datetime.datetime.fromisoformat(created.text)
-
-    expires = root.find(expires_xpath)
-    if expires is None:
-        raise Fault(faultcode='InvalidRequest', faultstring='Expires timestamp not found')
-    expires_dt = datetime.datetime.fromisoformat(expires.text)
-
-    if created_dt > now:
-        raise Fault(faultcode='InvalidRequest', faultstring='Created timestamp is in the future')
-    if expires_dt < now:
-        raise Fault(faultcode='InvalidRequest', faultstring='Envelope has expired')
-    pass
+    try:
+        verify_timestamp(root)
+    except ValueError as e:
+        raise Fault(faultcode='InvalidRequest', faultstring=str(e))
 
     try:
-        verify_envelope(root, MsystemsConfig.mpay_config['mpay_cert'])
+        verify_signature(root, MsystemsConfig.mpay_config['mpay_certificate'])
     except SignatureVerificationFailed:
         raise Fault(faultcode='InvalidRequest', faultstring=f'Envelope signature verification failed')
 
@@ -95,18 +84,8 @@ def _validate_envelope(ctx):
 def _add_envelope_header(ctx):
     root = ctx.out_document
 
-    dt_now = datetime.datetime.now()
-    dt_expires = dt_now + datetime.datetimedelta(minutes=5)
-
-    header = etree.SubElement(root, etree.QName(ns_envelope, "Header"))
-    security = etree.SubElement(header, etree.QName(ns_wss_s, "Security"))
-    timestamp = etree.SubElement(security, etree.QName(ns_wss_util, "Timestamp"))
-    created = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Created"))
-    created.text = dt_now.isoformat()
-    expires = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Expires"))
-    expires.text = dt_expires.isoformat()
-
-    sign_envelope(root, MsystemsConfig.mpay_config['service_private_key'],
+    add_timestamp(root)
+    add_signature(root, MsystemsConfig.mpay_config['service_private_key'],
                   MsystemsConfig.mpay_config['service_certificate'])
 
     ctx.out_string = [etree.tostring(ctx.out_document)]
@@ -139,7 +118,7 @@ class MpayService(ServiceBase):
             OrderKey=bill.code,
             Reason="Voucher Acquirement",
             ServiceID=query.ServiceID,
-            Status=OrderStatus.Active,
+            Status=_order_status_map[bill.status],
             TotalAmountDue=str(bill.amount_total)
         )
 
