@@ -3,7 +3,7 @@ from copy import deepcopy
 from location.models import Location
 from msystems.apps import MsystemsConfig
 
-from msystems.services import SamlUserService
+from msystems.services.saml_user_service import SamlUserService
 from msystems.tests.data import example_username, example_user_data, example_user_data_multiple_ph
 from core.models import User, InteractiveUser, UserRole, Role
 from policyholder.models import PolicyHolder
