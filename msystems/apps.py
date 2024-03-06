@@ -2,9 +2,9 @@ from django.apps import AppConfig
 
 DEFAULT_CFG = {
     # URL to be redirected to after successful login
-    'mpass_login_redirect': "",
+    "mpass_login_redirect": "",
     # Mpass configurations
-    'mpass_config': {
+    "mpass_config": {
         # Strict mode: SAML responses must be validated strictly.
         "strict": True,
         # Set this to True for debugging purposes.
@@ -52,45 +52,47 @@ DEFAULT_CFG = {
         },
     },
     # Mpay configurations
-    'mpay_config': {
-        'service_id': "SERVICE1",
+    "mpay_config": {
+        "url": "",
+        "payment_path": "service/pay",
+        "service_id": "SERVICE1",
         # The same as mpass cert
-        'service_certificate': "",
+        "service_certificate": "",
         # The same as mpass private key
-        'service_private_key': "",
+        "service_private_key": "",
         # Mpay certificate, PEM string format
-        'mpay_certificate': "",
+        "mpay_certificate": "",
         # Default account info for voucher payments
-        'mpay_destination_account': {
-            'BankCode': "",
-            'BankFiscalCode': "",
-            'BankAccount': "",
-            'BeneficiaryName': ""
+        "mpay_destination_account": {
+            "BankCode": "",
+            "BankFiscalCode": "",
+            "BankAccount": "",
+            "BeneficiaryName": ""
         }
     },
     # Mconnect configurations
-    'mconnect_config': {
-        'url': "",
+    "mconnect_config": {
+        "url": "",
         # The same as mpass cert
-        'service_certificate': "",
+        "service_certificate": "",
         # The same as mpass private key
-        'service_private_key': "",
+        "service_private_key": "",
         # Mconnect certificate, PEM string format
-        'mconnect_certificate': ""
+        "mconnect_certificate": ""
     }
 }
 
 
 class MsystemsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'msystems'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "msystems"
 
     ##### DO NOT  CHANGE THIS ####
-    ADMIN = 'Admin'
-    INSPECTOR = 'Inspector'
-    EMPLOYER = 'Employer'
-    IMIS_ADMIN = 'IMIS Administrator'
-    ENROLMENT_OFFICER = 'Enrolment Officer'
+    ADMIN = "Admin"
+    INSPECTOR = "Inspector"
+    EMPLOYER = "Employer"
+    IMIS_ADMIN = "IMIS Administrator"
+    ENROLMENT_OFFICER = "Enrolment Officer"
     ##### ------------------ ####
 
     mpass_config = None
