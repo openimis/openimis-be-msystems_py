@@ -3,12 +3,17 @@ import logging
 
 from lxml import etree
 from django.db import transaction
+from django.views.decorators.http import require_GET
+from django.http import HttpResponseNotFound
+from django.shortcuts import redirect
+from rest_framework.decorators import api_view
 from spyne.application import Application
 from spyne.decorator import rpc
 from spyne.model.fault import Fault
 from spyne.protocol.soap import Soap11
 from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
+from urllib.parse import urljoin
 from zeep.exceptions import SignatureVerificationFailed
 
 from invoice.apps import InvoiceConfig
@@ -18,6 +23,7 @@ from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, Order
     PaymentConfirmation, PaymentAccount, OrderStatus
 from msystems.xml_utils import add_signature, verify_signature, verify_timestamp, add_timestamp
 from worker_voucher.models import WorkerVoucher
+from worker_voucher.services import worker_voucher_bill_user_filter
 
 namespace = 'https://zilieri.gov.md'
 logger = logging.getLogger(__name__)
@@ -154,3 +160,16 @@ _application.event_manager.add_listener('method_call', _validate_envelope)
 
 mpay_app = DjangoApplication(_application)
 mpay_app.event_manager.add_listener('wsgi_return', _add_envelope_header)
+
+
+@require_GET
+@api_view(['GET'])
+def mpay_bill_payment_redirect(request):
+    bill_id = request.GET.get('bill')
+    bill = worker_voucher_bill_user_filter(Bill.objects.filter(id=bill_id, is_deleted=False), request.user).first()
+    if not bill:
+        return HttpResponseNotFound()
+
+    redirect_url = urljoin(MsystemsConfig.mpay_config['url'], MsystemsConfig.mpay_config['payment_path'])
+    query = f"OrderKey={bill.code}&ServiceID={MsystemsConfig.mpay_config['service_id']}"
+    return redirect(f"{redirect_url}?{query}")

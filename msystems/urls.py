@@ -12,5 +12,6 @@ saml_urls = [
 
 urlpatterns = [
     path("saml/", include(saml_urls)),
-    path("mpay/", csrf_exempt(mpay.mpay_app))
+    path("mpay/", csrf_exempt(mpay.mpay_app)),
+    path("mpay_payment/", mpay.mpay_bill_payment_redirect),
 ]
