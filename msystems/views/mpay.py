@@ -17,7 +17,7 @@ from urllib.parse import urljoin
 from zeep.exceptions import SignatureVerificationFailed
 
 from invoice.apps import InvoiceConfig
-from invoice.models import Bill
+from invoice.models import Bill, BillPayment
 from msystems.apps import MsystemsConfig
 from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, OrderLine, OrderDetails, \
     PaymentConfirmation, PaymentAccount, OrderStatus
@@ -148,6 +148,18 @@ class MpayService(ServiceBase):
             if bill.status != Bill.Status.PAID:
                 bill.status = Bill.Status.PAID
                 bill.save(username=bill.user_updated.username)
+
+            payment = BillPayment.objects.filter(bill=bill, code_tp=confirmation.PaymentID).first()
+            if not payment:
+                payment = BillPayment(bill=bill)
+                payment.code_tp = confirmation.PaymentID
+                payment.code_ext = confirmation.InvoiceID
+                payment.status = BillPayment.PaymentStatus.ACCEPTED
+                payment.date_payment = confirmation.PaidAt
+                payment.amount_payed = bill.amount_total
+                payment.amount_received = bill.amount_total
+                payment.payment_origin = "Mpay"
+                payment.save(username=bill.user_updated.username)
 
 
 _application = Application(
