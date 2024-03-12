@@ -75,7 +75,7 @@ def _get_voucher(bill_item):
 
 def _validate_envelope(ctx):
     root = ctx.in_document
-    logger.error(etree.tostring(root, pretty_print=True, encoding='unicode'))
+    logger.info(etree.tostring(root, pretty_print=True, encoding='unicode'))
 
     try:
         verify_timestamp(root)
@@ -97,7 +97,9 @@ def _add_envelope_header(ctx):
     add_signature(root, MsystemsConfig.mpay_config['service_private_key'],
                   MsystemsConfig.mpay_config['service_certificate'])
 
-    ctx.out_string = [etree.tostring(ctx.out_document)]
+    envelope = etree.tostring(ctx.out_document)
+    logger.info(envelope)
+    ctx.out_string = [envelope]
 
 
 class MpayService(ServiceBase):
@@ -131,7 +133,9 @@ class MpayService(ServiceBase):
             TotalAmountDue=str(bill.amount_total)
         )
 
-        return GetOrderDetailsResult(OrderDetails=order_details)
+        ret = GetOrderDetailsResult(OrderDetails=order_details)
+        logger.info("GetOrderDetails response: %s", ret)
+        return ret
 
     @rpc(PaymentConfirmation.customize(min_occurs=1, max_occurs=1, nillable=False))
     def ConfirmOrderPayment(ctx, confirmation: PaymentConfirmation) -> None:
