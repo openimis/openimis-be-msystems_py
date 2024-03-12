@@ -75,6 +75,7 @@ def _get_voucher(bill_item):
 
 def _validate_envelope(ctx):
     root = ctx.in_document
+    logger.error(etree.tostring(root, pretty_print=True, encoding='unicode'))
 
     try:
         verify_timestamp(root)
