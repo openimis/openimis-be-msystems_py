@@ -25,7 +25,7 @@ from msystems.xml_utils import add_signature, verify_signature, verify_timestamp
 from worker_voucher.models import WorkerVoucher
 from worker_voucher.services import worker_voucher_bill_user_filter
 
-namespace = 'https://zilieri.gov.md'
+namespace = 'https://mpay.gov.md'
 logger = logging.getLogger(__name__)
 
 _order_status_map = {
