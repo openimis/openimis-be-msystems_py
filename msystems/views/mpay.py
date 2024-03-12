@@ -80,11 +80,13 @@ def _validate_envelope(ctx):
     try:
         verify_timestamp(root)
     except ValueError as e:
+        logger.error(f"Timestamp verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=str(e))
 
     try:
         verify_signature(root, MsystemsConfig.mpay_config['mpay_certificate'])
-    except SignatureVerificationFailed:
+    except SignatureVerificationFailed as e:
+        logger.error("Envelope signature verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=f'Envelope signature verification failed')
 
 
@@ -163,6 +165,14 @@ class MpayService(ServiceBase):
                 payment.save(username=bill.user_updated.username)
 
 
+def _error_handler_function(ctx, method_name, exc):
+    # Log the error. You can use Django's logging framework.
+    # Replace 'myapp' with the appropriate name for your logger.
+    logger.error("Spyne error at %s", method_name, exc_info=exc)
+
+    return exc
+
+
 _application = Application(
     [MpayService],
     tns=namespace,
@@ -170,6 +180,7 @@ _application = Application(
     out_protocol=Soap11(),
 )
 _application.event_manager.add_listener('method_call', _validate_envelope)
+_application.event_manager.add_listener('method_exception_object', _error_handler_function)
 
 mpay_app = DjangoApplication(_application)
 mpay_app.event_manager.add_listener('wsgi_return', _add_envelope_header)
