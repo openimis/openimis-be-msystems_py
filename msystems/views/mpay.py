@@ -165,12 +165,8 @@ class MpayService(ServiceBase):
                 payment.save(username=bill.user_updated.username)
 
 
-def _error_handler_function(ctx, method_name, exc):
-    # Log the error. You can use Django's logging framework.
-    # Replace 'myapp' with the appropriate name for your logger.
-    logger.error("Spyne error at %s", method_name, exc_info=exc)
-
-    return exc
+def _error_handler_function(ctx, *args, **kwargs):
+    logger.error("Spyne error", exc_info=ctx.in_error)
 
 
 _application = Application(
