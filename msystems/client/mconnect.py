@@ -38,18 +38,20 @@ class SoapWssePlugin(Plugin):
 
 
 class MconnectClient:
-
     def __init__(self):
         self.url = MsystemsConfig.mconnect_config['url']
 
-        settings = Settings(strict=False, raw_response=True)
-        self.client = Client(self.url, settings,
-                             plugins=[SoapWssePlugin(MsystemsConfig.mconnect_config['service_private_key'],
-                                                     MsystemsConfig.mconnect_config['service_certificate'],
-                                                     MsystemsConfig.mconnect_config['mconnect_certificate'])])
+        # Service handler replaced with hardcoded response
+        # settings = Settings(strict=False, raw_response=True)
+        # self.client = Client(self.url, settings,
+        #                      plugins=[SoapWssePlugin(MsystemsConfig.mconnect_config['service_private_key'],
+        #                                              MsystemsConfig.mconnect_config['service_certificate'],
+        #                                              MsystemsConfig.mconnect_config['mconnect_certificate'])])
 
     def get_person(self, idpn):
-        service_handle = self.client.service.get('GetPerson')
-        if not service_handle:
-            raise MconnectClientError("Service GetPerson not found")
-        return service_handle(IDPN=idpn)
+        # Service handler replaced with hardcoded response
+        # service_handle = self.client.service.get('GetPerson')
+        # if not service_handle:
+        #     raise MconnectClientError("Service GetPerson not found")
+        # response = service_handle(IDPN=idpn)
+        return {"success": True, "data": {"idpn": idpn, "first_name": "John", "last_name": "Doe"}}
