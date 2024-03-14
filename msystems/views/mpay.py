@@ -6,6 +6,7 @@ from django.db import transaction
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseNotFound
 from django.shortcuts import redirect
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import api_view
 from spyne.application import Application
 from spyne.decorator import rpc
@@ -20,8 +21,9 @@ from invoice.apps import InvoiceConfig
 from invoice.models import Bill, BillPayment
 from msystems.apps import MsystemsConfig
 from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, OrderLine, OrderDetails, \
-    PaymentConfirmation, PaymentAccount, OrderStatus
+    PaymentConfirmation, PaymentAccount, OrderStatus, CustomerType
 from msystems.xml_utils import add_signature, verify_signature, verify_timestamp, add_timestamp
+from policyholder.models import PolicyHolder
 from worker_voucher.models import WorkerVoucher
 from worker_voucher.services import worker_voucher_bill_user_filter
 
@@ -46,7 +48,8 @@ def _check_service_id(service_id):
 
 
 def _get_order(order_key):
-    bill = Bill.objects.filter(code__iexact=order_key).first()
+    bill = Bill.objects.filter(code__iexact=order_key,
+                               subject_type=ContentType.objects.get_for_model(PolicyHolder)).first()
     if not bill:
         raise Fault(faultcode='InvalidParameter', faultstring=f'OrderKey "{order_key}" is unknown')
     return bill
@@ -97,7 +100,7 @@ def _add_envelope_header(ctx):
     add_signature(root, MsystemsConfig.mpay_config['service_private_key'],
                   MsystemsConfig.mpay_config['service_certificate'])
 
-    envelope = etree.tostring(ctx.out_document)
+    envelope = etree.tostring(ctx.out_document, pretty_print=True)
     logger.info(envelope)
     ctx.out_string = [envelope]
 
@@ -124,6 +127,9 @@ class MpayService(ServiceBase):
             raise Fault(faultcode='InvalidParameter', faultstring=f'OrderKey "{query.OrderKey}" has no line items')
 
         order_details = OrderDetails(
+            CustomerID=bill.subject.code,
+            CustomerType=CustomerType.Organisation,
+            CustomerName=bill.subject.trade_name,
             Currency=InvoiceConfig.default_currency_code,
             Lines=order_lines,
             OrderKey=bill.code,

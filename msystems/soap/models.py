@@ -4,7 +4,7 @@ from spyne.model.enum import Enum
 
 namespace = 'https://mpay.gov.md'
 
-Currency = Enum('MDL', 'EUR', 'USD', type_name='Currency')
+CurrencyCode = Enum('MDL', 'EUR', 'USD', type_name='Currency')
 CustomerType = Enum('Unspecified', 'Person', 'Organisation', type_name='CustomerType')
 OrderStatus = Enum('Active', 'PartiallyPaid', 'Paid', 'Completed', 'Expired', 'Canceled', 'Refunding',
                    'Refunded', type_name='OrderStatus')
@@ -63,10 +63,10 @@ class OrderDetails(ComplexModel):
 
     AllowAdvancePayment = Boolean.customize(min_occurs=0, max_occurs=1, nillable=False, default=False)
     AllowPartialPayment = Boolean.customize(min_occurs=0, max_occurs=1, nillable=False, default=False)
-    Currency = Currency.customize(min_occurs=1, max_occurs=1, nillable=False)
+    Currency = CurrencyCode.customize(min_occurs=1, max_occurs=1, nillable=False)
     CustomerID = Unicode.customize(min_occurs=0, max_occurs=1, max_len=13, nillable=False)
-    CustomerName = Unicode.customize(min_occurs=0, max_occurs=1, max_len=60, nillable=False)
-    CustomerType = CustomerType.customize(min_occurs=0, max_occurs=1, nillable=False, default=CustomerType.Unspecified)
+    CustomerName = Unicode.customize(min_occurs=1, max_occurs=1, max_len=60, nillable=False)
+    CustomerType = CustomerType.customize(min_occurs=1, max_occurs=1, nillable=False)
     DueDate = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False)
     IssuedAt = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False)
     Lines = (Array(OrderLine.customize(min_occurs=1, max_occurs="unbounded", nillable=False))
@@ -110,7 +110,7 @@ class PaymentConfirmation(ComplexModel):
     __namespace__ = namespace
     __type_name__ = 'PaymentConfirmation'
 
-    Currency = Currency.customize(min_occurs=1, max_occurs=1, nillable=False)
+    CurrencyCode = CurrencyCode.customize(min_occurs=1, max_occurs=1, nillable=False)
     InvoiceID = Unicode.customize(min_occurs=0, max_occurs=1, max_len=36, nillable=False)
     Lines = Array(PaymentConfirmationLine.customize(min_occurs=1, max_occurs="unbounded", nillable=False))
     OrderKey = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
