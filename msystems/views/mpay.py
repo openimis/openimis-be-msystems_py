@@ -101,7 +101,7 @@ def _add_envelope_header(ctx):
                   MsystemsConfig.mpay_config['service_certificate'])
 
     envelope = etree.tostring(ctx.out_document, pretty_print=True)
-    logger.info(envelope)
+    logger.info(envelope.decode('utf-8'))
     ctx.out_string = [envelope]
 
 
@@ -112,16 +112,21 @@ class MpayService(ServiceBase):
         _check_service_id(query.ServiceID)
         bill = _get_order(query.OrderKey)
 
-        account = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account'])
+        split = decimal.Decimal(MsystemsConfig.mpay_config['mpay_split'])
+        account1 = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account_1'])
+        account2 = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account_2'])
 
-        order_lines = [
-            OrderLine(
-                AmountDue=str(bill_item.amount_total),
-                LineID=bill_item.code,
-                Reason="Voucher Acquirement",
-                DestinationAccount=account)
-            for bill_item in bill.line_items_bill.filter(is_deleted=False)
-        ]
+        order_lines = []
+        for bill_item in bill.line_items_bill.filter(is_deleted=False):
+            amount1 = bill_item.amount_total * split
+            order_lines.append(OrderLine(AmountDue=str(amount1),
+                                         LineID=bill_item.code + "_1",
+                                         Reason="Voucher Acquirement",
+                                         DestinationAccount=account1))
+            order_lines.append(OrderLine(AmountDue=str(bill_item.amount_total - amount1),
+                                         LineID=bill_item.code + "_2",
+                                         Reason="Voucher Acquirement",
+                                         DestinationAccount=account2))
 
         if not order_lines:
             raise Fault(faultcode='InvalidParameter', faultstring=f'OrderKey "{query.OrderKey}" has no line items')
@@ -140,19 +145,16 @@ class MpayService(ServiceBase):
         )
 
         ret = GetOrderDetailsResult(OrderDetails=order_details)
-        logger.info("GetOrderDetails response: %s", ret)
         return ret
 
     @rpc(PaymentConfirmation.customize(min_occurs=1, max_occurs=1, nillable=False))
     def ConfirmOrderPayment(ctx, confirmation: PaymentConfirmation) -> None:
         _check_service_id(confirmation.ServiceID)
         bill = _get_order(confirmation.OrderKey)
+        _check_amount_due(bill, decimal.Decimal(confirmation.TotalAmount))
 
         with transaction.atomic():
-            for line in confirmation.Lines:
-                line_amount = decimal.Decimal(line.Amount)
-                bill_item = _get_order_line(bill, line.LineID)
-                _check_amount_due(bill_item, line_amount)
+            for bill_item in bill.line_items_bill.filter(is_deleted=False):
                 voucher = _get_voucher(bill_item)
                 if voucher.status != WorkerVoucher.Status.ASSIGNED:
                     voucher.status = WorkerVoucher.Status.ASSIGNED

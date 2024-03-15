@@ -38,7 +38,7 @@ class OrderDetailsQuery(ComplexModel):
     __namespace__ = namespace
     __type_name__ = 'OrderDetailsQuery'
 
-    Language = Unicode.customize(min_occurs=0, max_occurs=1, max_len=2, nillable=False)
+    Language = Unicode.customize(min_occurs=0, max_occurs=1, max_len=2, nillable=False, default='ro')
     OrderKey = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
     ServiceID = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
 

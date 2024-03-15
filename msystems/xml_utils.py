@@ -31,9 +31,9 @@ def add_timestamp(root):
     security = etree.SubElement(header, etree.QName(ns_wss_s, "Security"))
     timestamp = etree.SubElement(security, etree.QName(ns_wss_util, "Timestamp"))
     created = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Created"))
-    created.text = dt_now.isoformat()
+    created.text = dt_now.strftime("%Y-%m-%dT%H:%M:%SZ")
     expires = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Expires"))
-    expires.text = dt_expires.isoformat()
+    expires.text = dt_expires.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def replace_utc_timezone_with_offset(dt_str):
