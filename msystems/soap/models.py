@@ -110,7 +110,7 @@ class PaymentConfirmation(ComplexModel):
     __namespace__ = namespace
     __type_name__ = 'PaymentConfirmation'
 
-    CurrencyCode = CurrencyCode.customize(min_occurs=1, max_occurs=1, nillable=False)
+    Currency = CurrencyCode.customize(min_occurs=1, max_occurs=1, nillable=False)
     InvoiceID = Unicode.customize(min_occurs=0, max_occurs=1, max_len=36, nillable=False)
     Lines = Array(PaymentConfirmationLine.customize(min_occurs=1, max_occurs="unbounded", nillable=False))
     OrderKey = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
