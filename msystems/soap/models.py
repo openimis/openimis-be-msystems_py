@@ -5,7 +5,7 @@ from spyne.model.enum import Enum
 namespace = 'https://mpay.gov.md'
 
 CurrencyCode = Enum('MDL', 'EUR', 'USD', type_name='Currency')
-CustomerType = Enum('Unspecified', 'Person', 'Organisation', type_name='CustomerType')
+CustomerType = Enum('Unspecified', 'Person', 'Organization', type_name='CustomerType')
 OrderStatus = Enum('Active', 'PartiallyPaid', 'Paid', 'Completed', 'Expired', 'Canceled', 'Refunding',
                    'Refunded', type_name='OrderStatus')
 PropertyType = Enum('string', 'idn', 'tc', type_name='Type')

@@ -118,12 +118,13 @@ class MpayService(ServiceBase):
 
         order_lines = []
         for bill_item in bill.line_items_bill.filter(is_deleted=False):
-            amount1 = bill_item.amount_total * split
+            amount1 = round(bill_item.amount_total * split, 2)
             order_lines.append(OrderLine(AmountDue=str(amount1),
                                          LineID=bill_item.code + "_1",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account1))
-            order_lines.append(OrderLine(AmountDue=str(bill_item.amount_total - amount1),
+            amount2 = round(bill_item.amount_total - amount1, 2)
+            order_lines.append(OrderLine(AmountDue=amount2,
                                          LineID=bill_item.code + "_2",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account2))
@@ -133,7 +134,7 @@ class MpayService(ServiceBase):
 
         order_details = OrderDetails(
             CustomerID=bill.subject.code,
-            CustomerType=CustomerType.Organisation,
+            CustomerType=CustomerType.Organization,
             CustomerName=bill.subject.trade_name,
             Currency=InvoiceConfig.default_currency_code,
             Lines=order_lines,
