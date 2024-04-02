@@ -76,9 +76,18 @@ def _get_voucher(bill_item):
     return voucher
 
 
+def _log_rpc_call(ctx):
+    input = ctx.transport.req.get('wsgi.input')
+    action = ctx.transport.req.get('HTTP_SOAPACTION')
+    if input:
+        input.seek(0)
+        data = input.read().decode("utf-8")
+        logger.info(f"Method {action} called with:\n{data}\n")
+        input.seek(0)
+
+
 def _validate_envelope(ctx):
     root = ctx.in_document
-    logger.info(etree.tostring(root, pretty_print=True, encoding='unicode'))
 
     try:
         verify_timestamp(root)
@@ -195,6 +204,7 @@ _application.event_manager.add_listener('method_call', _validate_envelope)
 _application.event_manager.add_listener('method_exception_object', _error_handler_function)
 
 mpay_app = DjangoApplication(_application)
+mpay_app.event_manager.add_listener('wsgi_call', _log_rpc_call)
 mpay_app.event_manager.add_listener('wsgi_return', _add_envelope_header)
 
 
