@@ -119,13 +119,16 @@ class MpayService(ServiceBase):
         order_lines = []
         for bill_item in bill.line_items_bill.filter(is_deleted=False):
             amount1 = round(bill_item.amount_total * split, 2)
+            # Split the amount into two lines
+            # Use only first 2 sections of the code (uuid),max char limit is 36, full len code is 38
+            # The line should be easily identifiable in context of OrderId (bill code)
             order_lines.append(OrderLine(AmountDue=str(amount1),
-                                         LineID=bill_item.code[:8] + "_1",
+                                         LineID=bill_item.code[:13] + "_1",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account1))
             amount2 = round(bill_item.amount_total - amount1, 2)
             order_lines.append(OrderLine(AmountDue=amount2,
-                                         LineID=bill_item.code[:8] + "_2",
+                                         LineID=bill_item.code[:13] + "_2",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account2))
 
