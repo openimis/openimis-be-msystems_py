@@ -175,6 +175,7 @@ class MpayService(ServiceBase):
 
             if bill.status != Bill.Status.PAID:
                 bill.status = Bill.Status.PAID
+                bill.date_payed = confirmation.PaidAt
                 bill.save(username=bill.user_updated.username)
 
             payment = BillPayment.objects.filter(bill=bill, code_tp=confirmation.PaymentID).first()
