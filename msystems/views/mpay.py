@@ -120,12 +120,12 @@ class MpayService(ServiceBase):
         for bill_item in bill.line_items_bill.filter(is_deleted=False):
             amount1 = round(bill_item.amount_total * split, 2)
             order_lines.append(OrderLine(AmountDue=str(amount1),
-                                         LineID=bill_item.code + "_1",
+                                         LineID=bill_item.code[:8] + "_1",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account1))
             amount2 = round(bill_item.amount_total - amount1, 2)
             order_lines.append(OrderLine(AmountDue=amount2,
-                                         LineID=bill_item.code + "_2",
+                                         LineID=bill_item.code[:8] + "_2",
                                          Reason="Voucher Acquirement",
                                          DestinationAccount=account2))
 
