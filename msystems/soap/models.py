@@ -27,10 +27,12 @@ class PaymentAccount(ComplexModel):
     __namespace__ = namespace
     __type_name__ = 'PaymentAccount'
 
-    BankAccount = Unicode.customize(min_occurs=1, max_occurs=1, max_len=24, nillable=False)
-    BankCode = Unicode.customize(min_occurs=1, max_occurs=1, max_len=20, nillable=False)
-    BankFiscalCode = Unicode.customize(min_occurs=1, max_occurs=1, max_len=20, nillable=False)
-    BeneficiaryName = Unicode.customize(min_occurs=1, max_occurs=1, max_len=60, nillable=False)
+    # These fields should be required but mpay does not respect that
+    BankAccount = Unicode.customize(min_occurs=0, max_occurs=1, max_len=24, nillable=False)
+    BankCode = Unicode.customize(min_occurs=0, max_occurs=1, max_len=20, nillable=False)
+    BankFiscalCode = Unicode.customize(min_occurs=0, max_occurs=1, max_len=20, nillable=False)
+    BeneficiaryName = Unicode.customize(min_occurs=0, max_occurs=1, max_len=60, nillable=False)
+    # end of required fields
     ConfigurationCode = Unicode.customize(min_occurs=0, max_occurs=1, max_len=36, nillable=False)
 
 
