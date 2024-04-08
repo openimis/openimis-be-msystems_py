@@ -63,7 +63,14 @@ DEFAULT_CFG = {
         # Mpay certificate, PEM string format
         "mpay_certificate": "",
         # Default account info for voucher payments
-        "mpay_destination_account": {
+        "mpay_split": "0.5",
+        "mpay_destination_account_1": {
+            "BankCode": "",
+            "BankFiscalCode": "",
+            "BankAccount": "",
+            "BeneficiaryName": ""
+        },
+        "mpay_destination_account_2": {
             "BankCode": "",
             "BankFiscalCode": "",
             "BankAccount": "",

@@ -1,3 +1,4 @@
+import re
 import datetime as py_datetime
 from zeep.wsse.signature import _make_sign_key, _sign_envelope_with_key, _make_verify_key, _verify_envelope_with_key
 from lxml import etree
@@ -30,10 +31,14 @@ def add_timestamp(root):
     security = etree.SubElement(header, etree.QName(ns_wss_s, "Security"))
     timestamp = etree.SubElement(security, etree.QName(ns_wss_util, "Timestamp"))
     created = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Created"))
-    created.text = dt_now.isoformat()
+    created.text = dt_now.strftime("%Y-%m-%dT%H:%M:%SZ")
     expires = etree.SubElement(timestamp, etree.QName(ns_wss_util, "Expires"))
-    expires.text = dt_expires.isoformat()
+    expires.text = dt_expires.strftime("%Y-%m-%dT%H:%M:%SZ")
 
+
+def replace_utc_timezone_with_offset(dt_str):
+    # Python 3.9 does not support Z timezone in datetime strings
+    return re.sub(r'Z$', '+00:00', dt_str)
 
 def verify_timestamp(root):
     dt_now = datetime.datetime.from_ad_datetime(py_datetime.datetime.now(tz=py_datetime.timezone.utc))
@@ -41,11 +46,11 @@ def verify_timestamp(root):
 
     if created is None:
         raise ValueError('Created timestamp not found')
-    dt_created = datetime.datetime.fromisoformat(created.text)
+    dt_created = datetime.datetime.fromisoformat(replace_utc_timezone_with_offset(created.text))
 
     if expires is None:
         raise ValueError('Expires timestamp not found')
-    dt_expires = datetime.datetime.fromisoformat(expires.text)
+    dt_expires = datetime.datetime.fromisoformat(replace_utc_timezone_with_offset(expires.text))
 
     if dt_created > dt_now:
         raise ValueError('Created timestamp is in the future')

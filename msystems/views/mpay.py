@@ -6,6 +6,7 @@ from django.db import transaction
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseNotFound
 from django.shortcuts import redirect
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import api_view
 from spyne.application import Application
 from spyne.decorator import rpc
@@ -20,12 +21,13 @@ from invoice.apps import InvoiceConfig
 from invoice.models import Bill, BillPayment
 from msystems.apps import MsystemsConfig
 from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, OrderLine, OrderDetails, \
-    PaymentConfirmation, PaymentAccount, OrderStatus
+    PaymentConfirmation, PaymentAccount, OrderStatus, CustomerType
 from msystems.xml_utils import add_signature, verify_signature, verify_timestamp, add_timestamp
+from policyholder.models import PolicyHolder
 from worker_voucher.models import WorkerVoucher
 from worker_voucher.services import worker_voucher_bill_user_filter
 
-namespace = 'https://zilieri.gov.md'
+namespace = 'https://mpay.gov.md'
 logger = logging.getLogger(__name__)
 
 _order_status_map = {
@@ -46,7 +48,8 @@ def _check_service_id(service_id):
 
 
 def _get_order(order_key):
-    bill = Bill.objects.filter(code__iexact=order_key).first()
+    bill = Bill.objects.filter(code__iexact=order_key,
+                               subject_type=ContentType.objects.get_for_model(PolicyHolder)).first()
     if not bill:
         raise Fault(faultcode='InvalidParameter', faultstring=f'OrderKey "{order_key}" is unknown')
     return bill
@@ -73,17 +76,29 @@ def _get_voucher(bill_item):
     return voucher
 
 
+def _log_rpc_call(ctx):
+    input = ctx.transport.req.get('wsgi.input')
+    action = ctx.transport.req.get('HTTP_SOAPACTION')
+    if input:
+        input.seek(0)
+        data = input.read().decode("utf-8")
+        logger.info(f"Method {action} called with:\n{data}\n")
+        input.seek(0)
+
+
 def _validate_envelope(ctx):
     root = ctx.in_document
 
     try:
         verify_timestamp(root)
     except ValueError as e:
+        logger.error(f"Timestamp verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=str(e))
 
     try:
         verify_signature(root, MsystemsConfig.mpay_config['mpay_certificate'])
-    except SignatureVerificationFailed:
+    except SignatureVerificationFailed as e:
+        logger.error("Envelope signature verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=f'Envelope signature verification failed')
 
 
@@ -94,7 +109,9 @@ def _add_envelope_header(ctx):
     add_signature(root, MsystemsConfig.mpay_config['service_private_key'],
                   MsystemsConfig.mpay_config['service_certificate'])
 
-    ctx.out_string = [etree.tostring(ctx.out_document)]
+    envelope = etree.tostring(ctx.out_document, pretty_print=True)
+    logger.info(envelope.decode('utf-8'))
+    ctx.out_string = [envelope]
 
 
 class MpayService(ServiceBase):
@@ -104,21 +121,33 @@ class MpayService(ServiceBase):
         _check_service_id(query.ServiceID)
         bill = _get_order(query.OrderKey)
 
-        account = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account'])
+        split = decimal.Decimal(MsystemsConfig.mpay_config['mpay_split'])
+        account1 = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account_1'])
+        account2 = PaymentAccount(**MsystemsConfig.mpay_config['mpay_destination_account_2'])
 
-        order_lines = [
-            OrderLine(
-                AmountDue=str(bill_item.amount_total),
-                LineID=bill_item.code,
-                Reason="Voucher Acquirement",
-                DestinationAccount=account)
-            for bill_item in bill.line_items_bill.filter(is_deleted=False)
-        ]
+        order_lines = []
+        for bill_item in bill.line_items_bill.filter(is_deleted=False):
+            amount1 = round(bill_item.amount_total * split, 2)
+            # Split the amount into two lines
+            # Use only first 2 sections of the code (uuid),max char limit is 36, full len code is 38
+            # The line should be easily identifiable in context of OrderId (bill code)
+            order_lines.append(OrderLine(AmountDue=str(amount1),
+                                         LineID=bill_item.code[:13] + "_1",
+                                         Reason="Voucher Acquirement",
+                                         DestinationAccount=account1))
+            amount2 = round(bill_item.amount_total - amount1, 2)
+            order_lines.append(OrderLine(AmountDue=amount2,
+                                         LineID=bill_item.code[:13] + "_2",
+                                         Reason="Voucher Acquirement",
+                                         DestinationAccount=account2))
 
         if not order_lines:
             raise Fault(faultcode='InvalidParameter', faultstring=f'OrderKey "{query.OrderKey}" has no line items')
 
         order_details = OrderDetails(
+            CustomerID=bill.subject.code,
+            CustomerType=CustomerType.Organization,
+            CustomerName=bill.subject.trade_name,
             Currency=InvoiceConfig.default_currency_code,
             Lines=order_lines,
             OrderKey=bill.code,
@@ -128,18 +157,17 @@ class MpayService(ServiceBase):
             TotalAmountDue=str(bill.amount_total)
         )
 
-        return GetOrderDetailsResult(OrderDetails=order_details)
+        ret = GetOrderDetailsResult(OrderDetails=order_details)
+        return ret
 
     @rpc(PaymentConfirmation.customize(min_occurs=1, max_occurs=1, nillable=False))
     def ConfirmOrderPayment(ctx, confirmation: PaymentConfirmation) -> None:
         _check_service_id(confirmation.ServiceID)
         bill = _get_order(confirmation.OrderKey)
+        _check_amount_due(bill, decimal.Decimal(confirmation.TotalAmount))
 
         with transaction.atomic():
-            for line in confirmation.Lines:
-                line_amount = decimal.Decimal(line.Amount)
-                bill_item = _get_order_line(bill, line.LineID)
-                _check_amount_due(bill_item, line_amount)
+            for bill_item in bill.line_items_bill.filter(is_deleted=False):
                 voucher = _get_voucher(bill_item)
                 if voucher.status != WorkerVoucher.Status.ASSIGNED:
                     voucher.status = WorkerVoucher.Status.ASSIGNED
@@ -147,6 +175,7 @@ class MpayService(ServiceBase):
 
             if bill.status != Bill.Status.PAID:
                 bill.status = Bill.Status.PAID
+                bill.date_payed = confirmation.PaidAt
                 bill.save(username=bill.user_updated.username)
 
             payment = BillPayment.objects.filter(bill=bill, code_tp=confirmation.PaymentID).first()
@@ -162,6 +191,10 @@ class MpayService(ServiceBase):
                 payment.save(username=bill.user_updated.username)
 
 
+def _error_handler_function(ctx, *args, **kwargs):
+    logger.error("Spyne error", exc_info=ctx.in_error)
+
+
 _application = Application(
     [MpayService],
     tns=namespace,
@@ -169,8 +202,10 @@ _application = Application(
     out_protocol=Soap11(),
 )
 _application.event_manager.add_listener('method_call', _validate_envelope)
+_application.event_manager.add_listener('method_exception_object', _error_handler_function)
 
 mpay_app = DjangoApplication(_application)
+mpay_app.event_manager.add_listener('wsgi_call', _log_rpc_call)
 mpay_app.event_manager.add_listener('wsgi_return', _add_envelope_header)
 
 
