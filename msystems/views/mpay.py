@@ -1,5 +1,6 @@
 import decimal
 import logging
+from functools import reduce
 
 from lxml import etree
 from django.db import transaction
@@ -217,6 +218,9 @@ def mpay_bill_payment_redirect(request):
     if not bill:
         return HttpResponseNotFound()
 
+    host = f"{request.scheme}://{request.get_host()}/"
+    bill_path = f"{MsystemsConfig.mpay_config['bill_path']}/{bill_id}/"
+    redirect_back_url = urljoin(host, bill_path)
     redirect_url = urljoin(MsystemsConfig.mpay_config['url'], MsystemsConfig.mpay_config['payment_path'])
-    query = f"OrderKey={bill.code}&ServiceID={MsystemsConfig.mpay_config['service_id']}"
+    query = f"OrderKey={bill.code}&ServiceID={MsystemsConfig.mpay_config['service_id']}&ReturnUrl={redirect_back_url}"
     return redirect(f"{redirect_url}?{query}")

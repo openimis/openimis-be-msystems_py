@@ -55,6 +55,7 @@ DEFAULT_CFG = {
     "mpay_config": {
         "url": "",
         "payment_path": "service/pay",
+        "bill_path": "front/bills/bill",
         "service_id": "SERVICE1",
         # The same as mpass cert
         "service_certificate": "",
