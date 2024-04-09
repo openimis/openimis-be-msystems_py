@@ -1,6 +1,5 @@
 import decimal
 import logging
-from functools import reduce
 
 from lxml import etree
 from django.db import transaction
@@ -15,7 +14,7 @@ from spyne.model.fault import Fault
 from spyne.protocol.soap import Soap11
 from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote_plus
 from zeep.exceptions import SignatureVerificationFailed
 
 from invoice.apps import InvoiceConfig
@@ -222,5 +221,5 @@ def mpay_bill_payment_redirect(request):
     bill_path = f"{MsystemsConfig.mpay_config['bill_path']}/{bill_id}/"
     redirect_back_url = urljoin(host, bill_path)
     redirect_url = urljoin(MsystemsConfig.mpay_config['url'], MsystemsConfig.mpay_config['payment_path'])
-    query = f"OrderKey={bill.code}&ServiceID={MsystemsConfig.mpay_config['service_id']}&ReturnUrl={redirect_back_url}"
+    query = f"OrderKey={quote_plus(bill.code)}&ServiceID={quote_plus(MsystemsConfig.mpay_config['service_id'])}&ReturnUrl={quote_plus(redirect_back_url)}"
     return redirect(f"{redirect_url}?{query}")
