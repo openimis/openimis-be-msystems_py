@@ -40,6 +40,7 @@ def replace_utc_timezone_with_offset(dt_str):
     # Python 3.9 does not support Z timezone in datetime strings
     return re.sub(r'Z$', '+00:00', dt_str)
 
+
 def verify_timestamp(root):
     dt_now = datetime.datetime.from_ad_datetime(py_datetime.datetime.now(tz=py_datetime.timezone.utc))
     created, expires = root.find(created_xpath), root.find(expires_xpath)

@@ -98,13 +98,13 @@ class MsystemsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "msystems"
 
-    ##### DO NOT  CHANGE THIS ####
+    # DO NOT  CHANGE THIS ####
     ADMIN = "Admin"
     INSPECTOR = "Inspector"
     EMPLOYER = "Employer"
     IMIS_ADMIN = "IMIS Administrator"
     ENROLMENT_OFFICER = "Enrolment Officer"
-    ##### ------------------ ####
+    # ------------------ ####
 
     default_mpass_language = None
 

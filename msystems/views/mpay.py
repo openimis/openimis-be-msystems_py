@@ -93,14 +93,14 @@ def _validate_envelope(ctx):
     try:
         verify_timestamp(root)
     except ValueError as e:
-        logger.error(f"Timestamp verification failed", exc_info=e)
+        logger.error("Timestamp verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=str(e))
 
     try:
         verify_signature(root, MsystemsConfig.mpay_config['mpay_certificate'])
     except SignatureVerificationFailed as e:
         logger.error("Envelope signature verification failed", exc_info=e)
-        raise Fault(faultcode='InvalidRequest', faultstring=f'Envelope signature verification failed')
+        raise Fault(faultcode='InvalidRequest', faultstring='Envelope signature verification failed')
 
 
 def _add_envelope_header(ctx):
