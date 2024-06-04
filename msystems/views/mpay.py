@@ -93,14 +93,14 @@ def _validate_envelope(ctx):
     try:
         verify_timestamp(root)
     except ValueError as e:
-        logger.error(f"Timestamp verification failed", exc_info=e)
+        logger.error("Timestamp verification failed", exc_info=e)
         raise Fault(faultcode='InvalidRequest', faultstring=str(e))
 
     try:
         verify_signature(root, MsystemsConfig.mpay_config['mpay_certificate'])
     except SignatureVerificationFailed as e:
         logger.error("Envelope signature verification failed", exc_info=e)
-        raise Fault(faultcode='InvalidRequest', faultstring=f'Envelope signature verification failed')
+        raise Fault(faultcode='InvalidRequest', faultstring='Envelope signature verification failed')
 
 
 def _add_envelope_header(ctx):
@@ -155,7 +155,9 @@ class MpayService(ServiceBase):
             Reason="Voucher Acquirement",
             ServiceID=query.ServiceID,
             Status=_order_status_map[bill.status],
-            TotalAmountDue=str(bill.amount_total)
+            TotalAmountDue=str(bill.amount_total),
+            IssuedAt=bill.date_created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            DueAt=bill.date_due.strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
 
         ret = GetOrderDetailsResult(OrderDetails=order_details)

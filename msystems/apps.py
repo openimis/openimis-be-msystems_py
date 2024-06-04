@@ -1,8 +1,11 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
+    "default_mpass_language": "ro",
+
     # URL to be redirected to after successful login
     "mpass_login_redirect": "",
+
     # Mpass configurations
     "mpass_config": {
         # Strict mode: SAML responses must be validated strictly.
@@ -95,19 +98,19 @@ class MsystemsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "msystems"
 
-    ##### DO NOT  CHANGE THIS ####
+    # DO NOT  CHANGE THIS ####
     ADMIN = "Admin"
     INSPECTOR = "Inspector"
     EMPLOYER = "Employer"
     IMIS_ADMIN = "IMIS Administrator"
     ENROLMENT_OFFICER = "Enrolment Officer"
-    ##### ------------------ ####
+    # ------------------ ####
 
-    mpass_config = None
+    default_mpass_language = None
+
     mpass_login_redirect = None
-
+    mpass_config = None
     mpay_config = None
-
     mconnect_config = None
 
     def ready(self):
