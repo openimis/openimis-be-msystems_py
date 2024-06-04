@@ -155,7 +155,9 @@ class MpayService(ServiceBase):
             Reason="Voucher Acquirement",
             ServiceID=query.ServiceID,
             Status=_order_status_map[bill.status],
-            TotalAmountDue=str(bill.amount_total)
+            TotalAmountDue=str(bill.amount_total),
+            IssuedAt=bill.date_created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            DueAt=bill.date_due.strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
 
         ret = GetOrderDetailsResult(OrderDetails=order_details)

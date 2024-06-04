@@ -53,7 +53,7 @@ class SamlUserService:
             login_name=username,
             other_names=user_data.get('FirstName')[0],
             last_name=user_data.get('LastName')[0],
-            language_id='en',
+            language_id=MsystemsConfig.default_mpass_language,
             audit_user_id=0,
             is_associated=False,
             private_key=token_hex(128),
