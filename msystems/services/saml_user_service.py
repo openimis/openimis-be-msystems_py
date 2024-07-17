@@ -78,7 +78,7 @@ class SamlUserService:
             self._update_user_name(user.i_user, data_first_name, data_last_name)
 
     def _update_user_legal_entities(self, user: User, user_data: dict) -> None:
-        legal_entities = self._parse_legal_entities(user_data.get('OrganizationAdministrator', []))
+        legal_entities = self._parse_legal_entities(user_data.get('AdministeredLegalEntity', []))
         policyholders = [self._get_or_create_policy_holder(user, line[1], line[0]) for line in legal_entities]
 
         self._delete_old_user_policyholders(user, policyholders)
