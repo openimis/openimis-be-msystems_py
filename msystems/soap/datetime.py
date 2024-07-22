@@ -5,7 +5,7 @@ from core import datetime
 
 class SoapDatetime(datetime.datetime):
     def isoformat(self):
-        return re.sub(r"[+-]00:?00$", "Z", self.strftime("%y-%m-%dT%H:%M:%S%z"))
+        return re.sub(r"[+-]00:?00$", "Z", self.strftime("%Y-%m-%dT%H:%M:%S%z"))
 
     @classmethod
     def from_ad_date(cls, value):
