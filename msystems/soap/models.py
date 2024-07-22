@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from spyne.model.primitive import Unicode, DateTime, Decimal, Boolean
 from spyne.model.complex import ComplexModel, Array
 from spyne.model.enum import Enum
@@ -69,8 +71,8 @@ class OrderDetails(ComplexModel):
     CustomerID = Unicode.customize(min_occurs=0, max_occurs=1, max_len=13, nillable=False)
     CustomerName = Unicode.customize(min_occurs=1, max_occurs=1, max_len=60, nillable=False)
     CustomerType = CustomerType.customize(min_occurs=1, max_occurs=1, nillable=False)
-    DueDate = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False)
-    IssuedAt = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False)
+    DueDate = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False, as_timezone=timezone.utc)
+    IssuedAt = DateTime.customize(min_occurs=0, max_occurs=1, nillable=False, as_timezone=timezone.utc)
     Lines = (Array(OrderLine.customize(min_occurs=1, max_occurs="unbounded", nillable=False))
              .customize(min_occurs=1, max_occurs=1, nillable=False))
     OrderKey = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
