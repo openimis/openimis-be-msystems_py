@@ -21,6 +21,7 @@ from core import datetime
 from invoice.apps import InvoiceConfig
 from invoice.models import Bill, BillPayment
 from msystems.apps import MsystemsConfig
+from msystems.soap.datetime import SoapDatetime
 from msystems.soap.models import OrderDetailsQuery, GetOrderDetailsResult, OrderLine, OrderDetails, \
     PaymentConfirmation, PaymentAccount, OrderStatus, CustomerType
 from msystems.xml_utils import add_signature, verify_signature, verify_timestamp, add_timestamp
@@ -162,8 +163,8 @@ class MpayService(ServiceBase):
             ServiceID=query.ServiceID,
             Status=_order_status_map[bill.status],
             TotalAmountDue=str(bill.amount_total),
-            IssuedAt=bill.date_created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            DueAt=bill.date_due.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            IssuedAt=SoapDatetime.from_ad_datetime(bill.date_created),
+            DueDate=SoapDatetime.from_ad_date(bill.date_due),
         )
 
         ret = GetOrderDetailsResult(OrderDetails=order_details)
