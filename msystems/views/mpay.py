@@ -17,6 +17,7 @@ from spyne.service import ServiceBase
 from urllib.parse import urljoin, quote_plus
 from zeep.exceptions import SignatureVerificationFailed
 
+from core import datetime
 from invoice.apps import InvoiceConfig
 from invoice.models import Bill, BillPayment
 from msystems.apps import MsystemsConfig
@@ -66,6 +67,12 @@ def _check_amount_due(bill_item, amount_due):
     if amount_due != bill_item.amount_total:
         raise Fault(faultcode='InvalidParameter',
                     faultstring=f'Amount "{amount_due}" does not match the order line {bill_item.code}')
+
+def _check_due_date(bill):
+    now = datetime.datetime.now()
+    if not now < bill.date_due:
+        raise Fault(faultcode='InvalidParameter',
+                    faultstring=f'Order {bill.code} has expired on {bill.date_due}')
 
 
 def _get_voucher(bill_item):
@@ -167,12 +174,16 @@ class MpayService(ServiceBase):
         _check_service_id(confirmation.ServiceID)
         bill = _get_order(confirmation.OrderKey)
         _check_amount_due(bill, decimal.Decimal(confirmation.TotalAmount))
+        _check_due_date(bill)
 
         with transaction.atomic():
             for bill_item in bill.line_items_bill.filter(is_deleted=False):
                 voucher = _get_voucher(bill_item)
-                if voucher.status != WorkerVoucher.Status.ASSIGNED:
-                    voucher.status = WorkerVoucher.Status.ASSIGNED
+                if voucher.status == WorkerVoucher.Status.AWAITING_PAYMENT:
+                    if voucher.insuree is not None:
+                        voucher.status = WorkerVoucher.Status.ASSIGNED
+                    else:
+                        voucher.status = WorkerVoucher.Status.UNASSIGNED
                     voucher.save(username=voucher.user_updated.username)
 
             if bill.status != Bill.Status.PAID:
