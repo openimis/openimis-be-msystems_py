@@ -6,12 +6,12 @@ DEFAULT_CFG = {
     # URL to be redirected to after successful login
     "mpass_login_redirect": "",
 
-    "mpass_first_name": "FirstName",
-    "mpass_last_name": "LastName",
-    "mpass_dob": "BirthDate",
+    "mpass_key_first_name": "FirstName",
+    "mpass_key_last_name": "LastName",
+    "mpass_key_dob": "BirthDate",
     "mpass_key_roles": "Role",
     "mpass_key_legal_entities": "OrganizationAdministrator",
-    #"mpass_key_legal_entities": "AdministeredLegalEntity"
+    #"mpass_key_legal_entities": "AdministeredLegalEntity",
 
 
     # Mpass configurations
