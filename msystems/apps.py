@@ -6,6 +6,14 @@ DEFAULT_CFG = {
     # URL to be redirected to after successful login
     "mpass_login_redirect": "",
 
+    "mpass_first_name": "FirstName",
+    "mpass_last_name": "LastName",
+    "mpass_dob": "BirthDate",
+    "mpass_key_roles": "Role",
+    "mpass_key_legal_entities": "OrganizationAdministrator",
+    #"mpass_key_legal_entities": "AdministeredLegalEntity"
+
+
     # Mpass configurations
     "mpass_config": {
         # Strict mode: SAML responses must be validated strictly.
@@ -97,6 +105,12 @@ DEFAULT_CFG = {
 class MsystemsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "msystems"
+
+    mpass_key_first_name = None
+    mpass_key_last_name = None
+    mpass_dob = None
+    mpass_key_roles = None
+    mpass_key_legal_entities = None
 
     # DO NOT  CHANGE THIS ####
     ADMIN = "Admin"
