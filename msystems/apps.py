@@ -90,7 +90,15 @@ DEFAULT_CFG = {
         "service_private_key": "",
         # Mconnect certificate, PEM string format
         "mconnect_certificate": ""
-    }
+    },
+    "voucher_config": {
+        # The same as mpass cert
+        "service_certificate": "",
+        # The same as mpass private key
+        "service_private_key": "",
+        # client_certificate, PEM string format
+        "client_certificate": "",
+    },
 }
 
 
@@ -112,6 +120,7 @@ class MsystemsConfig(AppConfig):
     mpass_config = None
     mpay_config = None
     mconnect_config = None
+    voucher_config = None
 
     def ready(self):
         from core.models import ModuleConfiguration
