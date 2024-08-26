@@ -11,8 +11,7 @@ DEFAULT_CFG = {
     "mpass_key_dob": "BirthDate",
     "mpass_key_roles": "Role",
     "mpass_key_legal_entities": "OrganizationAdministrator",
-    #"mpass_key_legal_entities": "AdministeredLegalEntity",
-
+    # "mpass_key_legal_entities": "AdministeredLegalEntity",
 
     # Mpass configurations
     "mpass_config": {
@@ -97,7 +96,13 @@ DEFAULT_CFG = {
         # The same as mpass private key
         "service_private_key": "",
         # Mconnect certificate, PEM string format
-        "mconnect_certificate": ""
+        "mconnect_certificate": "",
+
+        # Get Person Soap Header default values
+        "get_person_calling_user": "", # len 13
+        "get_person_calling_entity": "", # len 13
+        "get_person_call_basis": "", # max len 256
+        "get_person_call_reason": "", # max len 512
     }
 }
 

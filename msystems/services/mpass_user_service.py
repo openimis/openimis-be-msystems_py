@@ -18,7 +18,7 @@ from policyholder.models import PolicyHolder, PolicyHolderUser
 logger = logging.getLogger(__name__)
 
 
-class SamlUserService:
+class MpassUserService:
     location = None
 
     def __init__(self):
@@ -85,13 +85,13 @@ class SamlUserService:
         self._add_new_user_policyholders(user, policyholders)
 
     def _update_user_roles(self, user, user_data):
-        msystem_roles_list = user_data.get(MsystemsConfig.mpass_key_legal_entities, [MsystemsConfig.EMPLOYER])
+        mpass_roles_list = user_data.get(MsystemsConfig.mpass_key_roles, [MsystemsConfig.EMPLOYER])
 
-        for role in msystem_roles_list:
+        for role in mpass_roles_list:
             self._validate_incoming_roles(role)
 
-        self._delete_old_user_roles(user, msystem_roles_list)
-        self._add_new_user_roles(user, msystem_roles_list)
+        self._delete_old_user_roles(user, mpass_roles_list)
+        self._add_new_user_roles(user, mpass_roles_list)
 
     def _update_user_name(self, i_user, first_name, last_name):
         i_user.save_history()
