@@ -18,7 +18,7 @@ from policyholder.models import PolicyHolder, PolicyHolderUser
 logger = logging.getLogger(__name__)
 
 
-class SamlUserService:
+class MpassUserService:
     location = None
 
     def __init__(self):
@@ -51,8 +51,8 @@ class SamlUserService:
     def _create_user(self, username: str, user_data: dict) -> User:
         i_user = InteractiveUser(
             login_name=username,
-            other_names=user_data.get('FirstName')[0],
-            last_name=user_data.get('LastName')[0],
+            other_names=user_data.get(MsystemsConfig.mpass_key_first_name)[0],
+            last_name=user_data.get(MsystemsConfig.mpass_key_last_name)[0],
             language_id=MsystemsConfig.default_mpass_language,
             audit_user_id=0,
             is_associated=False,
@@ -70,28 +70,28 @@ class SamlUserService:
         return core_user
 
     def _update_user(self, user: User, user_data: dict) -> None:
-        data_first_name = user_data.get('FirstName')[0]
-        data_last_name = user_data.get('LastName')[0]
+        data_first_name = user_data.get(MsystemsConfig.mpass_key_first_name)[0]
+        data_last_name = user_data.get(MsystemsConfig.mpass_key_last_name)[0]
 
         # Update first and last name if they are different
         if user.i_user.other_names != data_first_name or user.i_user.last_name != data_last_name:
             self._update_user_name(user.i_user, data_first_name, data_last_name)
 
     def _update_user_legal_entities(self, user: User, user_data: dict) -> None:
-        legal_entities = self._parse_legal_entities(user_data.get('AdministeredLegalEntity', []))
+        legal_entities = self._parse_legal_entities(user_data.get(MsystemsConfig.mpass_key_legal_entities, []))
         policyholders = [self._get_or_create_policy_holder(user, line[1], line[0]) for line in legal_entities]
 
         self._delete_old_user_policyholders(user, policyholders)
         self._add_new_user_policyholders(user, policyholders)
 
     def _update_user_roles(self, user, user_data):
-        msystem_roles_list = user_data.get('Role', [MsystemsConfig.EMPLOYER])
+        mpass_roles_list = user_data.get(MsystemsConfig.mpass_key_roles, [MsystemsConfig.EMPLOYER])
 
-        for role in msystem_roles_list:
+        for role in mpass_roles_list:
             self._validate_incoming_roles(role)
 
-        self._delete_old_user_roles(user, msystem_roles_list)
-        self._add_new_user_roles(user, msystem_roles_list)
+        self._delete_old_user_roles(user, mpass_roles_list)
+        self._add_new_user_roles(user, mpass_roles_list)
 
     def _update_user_name(self, i_user, first_name, last_name):
         i_user.save_history()
