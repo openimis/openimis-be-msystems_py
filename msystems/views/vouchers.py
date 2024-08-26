@@ -8,6 +8,7 @@ from spyne.protocol.soap import Soap11
 from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
 from zeep.exceptions import SignatureVerificationFailed
+from msystems.soap.models import VoucherStatus
 
 from msystems.apps import MsystemsConfig
 from msystems.soap.datetime import SoapDatetime
@@ -19,6 +20,23 @@ from msystems.soap.models import VoucherDetails, VouchersDetailsQuery, GetVouche
 namespace = 'https://mpay.gov.md'
 logger = logging.getLogger(__name__)
 
+_voucher_status_map_system_to_soap = {
+    WorkerVoucher.Status.ASSIGNED: VoucherStatus.Assigned,
+    WorkerVoucher.Status.AWAITING_PAYMENT: VoucherStatus.AwaitingPayment,
+    WorkerVoucher.Status.CANCELED: VoucherStatus.Canceled,
+    WorkerVoucher.Status.CLOSED: VoucherStatus.Closed,
+    WorkerVoucher.Status.EXPIRED: VoucherStatus.Expired,
+    WorkerVoucher.Status.UNASSIGNED: VoucherStatus.Unassigned,
+}
+
+_voucher_status_map_soap_to_system = {
+    VoucherStatus.Assigned: WorkerVoucher.Status.ASSIGNED,
+    VoucherStatus.AwaitingPayment: WorkerVoucher.Status.AWAITING_PAYMENT,
+    VoucherStatus.Canceled: WorkerVoucher.Status.CANCELED,
+    VoucherStatus.Closed: WorkerVoucher.Status.CLOSED,
+    VoucherStatus.Expired: WorkerVoucher.Status.EXPIRED,
+    VoucherStatus.Unassigned: WorkerVoucher.Status.UNASSIGNED,
+}
 
 def _get_vouchers(query: VouchersDetailsQuery):
     vouchers = WorkerVoucher.objects.filter(is_deleted=False)
@@ -40,7 +58,7 @@ def _get_vouchers(query: VouchersDetailsQuery):
         vouchers = vouchers.filter(code=query.VoucherCode)
 
     if query.VoucherStatus:
-        vouchers = vouchers.filter(status=query.VoucherStatus)
+        vouchers = vouchers.filter(status=_voucher_status_map_soap_to_system[query.VoucherStatus])
 
     return vouchers
 
@@ -97,7 +115,7 @@ class VoucherService(ServiceBase):
                 EmployerCode=str(voucher.policyholder.code) if voucher.policyholder else None,
                 WorkerNationalID=str(voucher.insuree.chf_id) if voucher.insuree else None,
                 VoucherCode=str(voucher.code),
-                VoucherStatus=str(voucher.status),
+                VoucherStatus=_voucher_status_map_system_to_soap[voucher.status],
             ))
 
         if not vouchers_details:
