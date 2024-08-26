@@ -6,7 +6,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 from msystems.apps import MsystemsConfig
-from msystems.services.saml_user_service import SamlUserService
+from msystems.services.mpass_user_service import MpassUserService
 from onelogin.saml2.auth import OneLogin_Saml2_Auth, OneLogin_Saml2_Settings
 from graphql_jwt.decorators import jwt_cookie
 from graphql_jwt.shortcuts import get_token, create_refresh_token
@@ -83,7 +83,7 @@ def _handle_acs_login(request):
     username = auth.get_nameid()
     user_data = auth.get_attributes()
 
-    user = SamlUserService().login(username=username, user_data=user_data)
+    user = MpassUserService().login(username=username, user_data=user_data)
 
     # Tokens to be set in cookies
     request.jwt_token = get_token(user)

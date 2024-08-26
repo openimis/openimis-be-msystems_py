@@ -6,6 +6,13 @@ DEFAULT_CFG = {
     # URL to be redirected to after successful login
     "mpass_login_redirect": "",
 
+    "mpass_key_first_name": "FirstName",
+    "mpass_key_last_name": "LastName",
+    "mpass_key_dob": "BirthDate",
+    "mpass_key_roles": "Role",
+    "mpass_key_legal_entities": "OrganizationAdministrator",
+    # "mpass_key_legal_entities": "AdministeredLegalEntity",
+
     # Mpass configurations
     "mpass_config": {
         # Strict mode: SAML responses must be validated strictly.
@@ -89,7 +96,13 @@ DEFAULT_CFG = {
         # The same as mpass private key
         "service_private_key": "",
         # Mconnect certificate, PEM string format
-        "mconnect_certificate": ""
+        "mconnect_certificate": "",
+
+        # Get Person Soap Header default values
+        "get_person_calling_user": "", # len 13
+        "get_person_calling_entity": "", # len 13
+        "get_person_call_basis": "", # max len 256
+        "get_person_call_reason": "", # max len 512
     },
     "voucher_config": {
         # The same as mpass cert
@@ -105,6 +118,12 @@ DEFAULT_CFG = {
 class MsystemsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "msystems"
+
+    mpass_key_first_name = None
+    mpass_key_last_name = None
+    mpass_dob = None
+    mpass_key_roles = None
+    mpass_key_legal_entities = None
 
     # DO NOT  CHANGE THIS ####
     ADMIN = "Admin"
