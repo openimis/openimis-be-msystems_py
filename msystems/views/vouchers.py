@@ -49,10 +49,10 @@ def _get_vouchers(query: VouchersDetailsQuery):
         vouchers = vouchers.filter(expiry_date=query.ExpiryDate)
 
     if query.EmployerCode:
-        vouchers = vouchers.filter(policyholder__code=query.EmployerCode)
+        vouchers = vouchers.filter(policyholder__code=query.EmployerCode, policyholder__is_deleted=False)
 
     if query.WorkerNationalID:
-        vouchers = vouchers.filter(insuree__chf_id=query.WorkerNationalID)
+        vouchers = vouchers.filter(insuree__chf_id=query.WorkerNationalID, insuree__validity_to__isnull=True)
 
     if query.VoucherCode:
         vouchers = vouchers.filter(code=query.VoucherCode)

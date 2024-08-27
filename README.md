@@ -107,18 +107,15 @@ The `VouchersDetailsQuery` complex model allows filtering vouchers based on vari
 ### Example Request
 
 ```xml
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="https://mpay.gov.md">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <tns:GetVouchersDetails>
-         <tns:VouchersDetailsQuery>
-            <tns:AssignedDate>2024-08-20T00:00:00Z</tns:AssignedDate>
-            <tns:EmployerCode>CC</tns:EmployerCode>
-            <tns:VoucherStatus>AwaitingPayment</tns:VoucherStatus>
-         </tns:VouchersDetailsQuery>
-      </tns:GetVouchersDetails>
+   <soap-env:Body>
+      <ns0:GetVouchersDetails xmlns:ns0="https://mpay.gov.md">
+         <ns0:query>
+            <ns0:AssignedDate>2024-08-20T00:00:00Z</ns0:AssignedDate>
+            <ns0:EmployerCode>CC</ns0:EmployerCode>
+            <ns0:VoucherStatus>AwaitingPayment</ns0:VoucherStatus>
+         </tns:query>
+      </ns0:GetVouchersDetails>
    </soapenv:Body>
-</soapenv:Envelope>
 ```
 
 ### Example Response
@@ -184,9 +181,11 @@ If no vouchers match the provided criteria, the service will return a SOAP fault
 ### Filtering by `VoucherCode`
 **Request:**
 ```xml
-<tns:VouchersDetailsQuery xmlns:tns="https://mpay.gov.md">
-    <tns:VoucherCode>123e4567-e89b-12d3-a456-426614174000</tns:VoucherCode>
-</tns:VouchersDetailsQuery>
+<ns0:GetVouchersDetails xmlns:ns0="https://mpay.gov.md">
+  <ns0:query>
+    <ns0:VoucherCode>123e4567-e89b-12d3-a456-426614174000</ns0:VoucherCode>
+  </ns0:query>  
+</ns0:GetVouchersDetails>
 ```
 **Description:**
 This request retrieves the details of a specific voucher identified by the VoucherCode `123e4567-e89b-12d3-a456-426614174000`.
@@ -194,10 +193,12 @@ This request retrieves the details of a specific voucher identified by the Vouch
 ### Filtering by WorkerNationalID and ExpiryDate
 **Request:**
 ```xml
-<tns:VouchersDetailsQuery xmlns:tns="https://mpay.gov.md">
-    <tns:WorkerNationalID>111111111111</tns:WorkerNationalID>
-    <tns:ExpiryDate>2024-12-31T00:00:00Z</tns:ExpiryDate>
-</tns:VouchersDetailsQuery>
+<ns0:GetVouchersDetails xmlns:ns0="https://mpay.gov.md">
+  <ns0:query>
+    <ns0:WorkerNationalID>111111111111</ns0:WorkerNationalID>
+    <ns0:ExpiryDate>2024-12-31T00:00:00Z</ns0:ExpiryDate>
+  </ns0:query>  
+</ns0:GetVouchersDetails>
 ```
 **Description:**
 This request fetches all vouchers assigned to the worker with the National ID `111111111111` that are set to expire on `2024-12-31`.
@@ -205,10 +206,12 @@ This request fetches all vouchers assigned to the worker with the National ID `1
 ### Filtering by WorkerNationalID and VoucherCode
 **Request:**
 ```xml
-<tns:VouchersDetailsQuery xmlns:tns="https://mpay.gov.md">
-    <tns:WorkerNationalID>111111111111</tns:WorkerNationalID>
-    <tns:VoucherCode>123e4567-e89b-12d3-a456-426614174000</tns:VoucherCode>
-</tns:VouchersDetailsQuery>
+<ns0:GetVouchersDetails xmlns:ns0="https://mpay.gov.md">
+  <ns0:query>
+    <ns0:WorkerNationalID>111111111111</ns0:WorkerNationalID>
+    <ns0:VoucherCode>123e4567-e89b-12d3-a456-426614174000</ns0:VoucherCode>
+  </ns0:query>  
+</ns0:GetVouchersDetails>
 ```
 **Description:**
 This request retrieves the details for a voucher identified by VoucherCode `123e4567-e89b-12d3-a456-426614174000`, assigned to the worker with National ID `111111111111`.
@@ -216,10 +219,12 @@ This request retrieves the details for a voucher identified by VoucherCode `123e
 ### Filtering by Status and ExpiryDate
 **Request:**
 ```xml
-<tns:VouchersDetailsQuery xmlns:tns="https://mpay.gov.md">
-    <tns:Status>Expired</tns:Status>
-    <tns:ExpiryDate>2023-12-31T00:00:00Z</tns:ExpiryDate>
-</tns:VouchersDetailsQuery>
+<ns0:GetVouchersDetails xmlns:ns0="https://mpay.gov.md">
+  <ns0:query>
+    <ns0:Status>Expired</ns0:Status>
+    <ns0:ExpiryDate>2023-12-31T00:00:00Z</ns0:ExpiryDate>
+  </ns0:query>  
+</ns0:GetVouchersDetails>
 ```
 **Description:**
 This request fetches all vouchers that are `Expired` as of `2023-12-31`.
