@@ -3,19 +3,19 @@ from copy import deepcopy
 from location.models import Location
 from msystems.apps import MsystemsConfig
 
-from msystems.services.saml_user_service import SamlUserService
+from msystems.services.mpass_user_service import MpassUserService
 from msystems.tests.data import example_username, example_user_data, example_user_data_multiple_ph
 from core.models import User, InteractiveUser, UserRole, Role
 from policyholder.models import PolicyHolder
 
 
-class SamlUserServiceTestCase(TestCase):
+class MpassUserServiceTestCase(TestCase):
     service = None
 
     @classmethod
     def setUpClass(cls):
-        super(SamlUserServiceTestCase, cls).setUpClass()
-        cls.service = SamlUserService()
+        super(MpassUserServiceTestCase, cls).setUpClass()
+        cls.service = MpassUserService()
 
     def test_login(self):
         self.assertFalse(User.objects.filter(
