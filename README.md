@@ -113,7 +113,7 @@ The `VouchersDetailsQuery` complex model allows filtering vouchers based on vari
             <ns0:AssignedDate>2024-08-20T00:00:00Z</ns0:AssignedDate>
             <ns0:EmployerCode>CC</ns0:EmployerCode>
             <ns0:VoucherStatus>AwaitingPayment</ns0:VoucherStatus>
-         </tns:query>
+         </ns0:query>
       </ns0:GetVouchersDetails>
    </soapenv:Body>
 ```
