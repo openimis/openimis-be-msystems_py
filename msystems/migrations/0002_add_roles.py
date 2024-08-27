@@ -7,7 +7,7 @@ ROLE_NAME_EMPLOYER = "Employer"
 
 
 def _get_role(role_name, role_model):
-    return role_model.objects.filter(name=role_name).first()
+    return role_model.objects.filter(name=role_name, validity_to__isnull=True).first()
 
 
 def _create_role(role_name, role_model):
