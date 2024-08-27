@@ -11,7 +11,8 @@ CustomerType = Enum('Unspecified', 'Person', 'Organization', type_name='Customer
 OrderStatus = Enum('Active', 'PartiallyPaid', 'Paid', 'Completed', 'Expired', 'Canceled', 'Refunding',
                    'Refunded', type_name='OrderStatus')
 PropertyType = Enum('string', 'idn', 'tc', type_name='Type')
-
+VoucherStatus = Enum('Assigned', 'AwaitingPayment', 'Canceled', 'Closed', 'Expired', 'Unassigned',
+                     type_name='VoucherStatus')
 
 class OrderProperty(ComplexModel):
     namespace = namespace
@@ -124,3 +125,35 @@ class PaymentConfirmation(ComplexModel):
                   .customize(min_occurs=0, max_occurs=1, nillable=False))
     ServiceID = Unicode.customize(min_occurs=1, max_occurs=1, max_len=36, nillable=False)
     TotalAmount = Decimal.customize(min_occurs=1, max_occurs=1, nillable=False)
+
+
+class VouchersDetailsQuery(ComplexModel):
+    __namespace__ = namespace
+    __type_name__ = 'VouchersDetailsQuery'
+
+    AssignedDate = DateTime.customize(min_occurs=0, max_occurs=1, nillable=True)
+    EmployerCode = Unicode.customize(min_occurs=0, max_occurs=1, nillable=True)
+    ExpiryDate = DateTime.customize(min_occurs=0, max_occurs=1, nillable=True)
+    WorkerNationalID = Unicode.customize(min_occurs=0, max_occurs=1, nillable=True)
+    VoucherCode = Unicode.customize(min_occurs=0, max_occurs=1, nillable=True)
+    VoucherStatus = VoucherStatus.customize(min_occurs=0, max_occurs=1, nillable=True)
+
+
+class VoucherDetails(ComplexModel):
+    __namespace__ = namespace
+    __type_name__ = 'VoucherDetails'
+
+    AssignedDate = DateTime.customize(min_occurs=1, max_occurs=1, nillable=True)
+    EmployerCode = Unicode.customize(min_occurs=1, max_occurs=1, nillable=True)
+    ExpiryDate = DateTime.customize(min_occurs=1, max_occurs=1, nillable=True)
+    WorkerNationalID = Unicode.customize(min_occurs=1, max_occurs=1, nillable=True)
+    VoucherCode = Unicode.customize(min_occurs=1, max_occurs=1, nillable=True)
+    VoucherStatus = VoucherStatus.customize(min_occurs=1, max_occurs=1, nillable=True)
+
+
+class GetVouchersDetailsResult(ComplexModel):
+    __namespace__ = namespace
+    __type_name__ = 'GetVouchersDetailsResult'
+
+    VouchersDetails = (Array(VoucherDetails.customize(min_occurs=1, max_occurs="unbounded", nillable=False))
+                       .customize(min_occurs=0, max_occurs=1, nillable=False))

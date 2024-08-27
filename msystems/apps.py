@@ -103,7 +103,15 @@ DEFAULT_CFG = {
         "get_person_calling_entity": "", # len 13
         "get_person_call_basis": "", # max len 256
         "get_person_call_reason": "", # max len 512
-    }
+    },
+    "voucher_config": {
+        # The same as mpass cert
+        "service_certificate": "",
+        # The same as mpass private key
+        "service_private_key": "",
+        # client_certificate, PEM string format
+        "client_certificate": "",
+    },
 }
 
 
@@ -131,6 +139,7 @@ class MsystemsConfig(AppConfig):
     mpass_config = None
     mpay_config = None
     mconnect_config = None
+    voucher_config = None
 
     def ready(self):
         from core.models import ModuleConfiguration
