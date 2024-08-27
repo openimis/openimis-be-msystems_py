@@ -7,7 +7,7 @@ rolerights = {
 
 
 def add_rights(role_name, role_model, role_right_model):
-    role = role_model.objects.get(name=role_name)
+    role = role_model.objects.get(name=role_name, validity_to__isnull=True)
     for right_id in rolerights[role_name]:
         if not role_right_model.objects.filter(validity_to__isnull=True, role=role, right_id=right_id).exists():
             _add_right_for_role(role, right_id, role_right_model)
