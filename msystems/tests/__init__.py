@@ -1,1 +1,1 @@
-from msystems.tests.saml_user_service_tests import SamlUserServiceTestCase
+from msystems.tests.mpass_user_service_tests import MpassUserServiceTestCase
