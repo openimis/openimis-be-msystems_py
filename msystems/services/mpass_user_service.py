@@ -53,7 +53,7 @@ class MpassUserService:
             login_name=username,
             other_names=user_data.get(MsystemsConfig.mpass_config["mpass_key_first_name"])[0],
             last_name=user_data.get(MsystemsConfig.mpass_config["mpass_key_last_name"])[0],
-            language_id=MsystemsConfig.mpay_config["mpass_default_language"],
+            language_id=MsystemsConfig.mpass_config["mpass_default_language"],
             audit_user_id=0,
             is_associated=False,
             private_key=token_hex(128),
