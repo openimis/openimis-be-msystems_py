@@ -5,6 +5,7 @@ from zeep.wsse.signature import _make_sign_key, _sign_envelope_with_key, _make_v
 from lxml import etree
 
 from core import datetime
+from msystems.apps import MsystemsConfig
 
 ns_envelope = "http://schemas.xmlsoap.org/soap/envelope/"
 ns_wss_util = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
@@ -20,6 +21,9 @@ def add_signature(root, key, cert):
 
 
 def verify_signature(root, cert):
+    if not MsystemsConfig.verify_incoming_soap_messages:
+        return
+
     key = _make_verify_key(cert)
     return _verify_envelope_with_key(root, key)
 
@@ -43,6 +47,9 @@ def replace_utc_timezone_with_offset(dt_str):
 
 
 def verify_timestamp(root):
+    if not MsystemsConfig.verify_incoming_soap_messages:
+        return
+
     dt_now = datetime.datetime.from_ad_datetime(py_datetime.datetime.now(tz=py_datetime.timezone.utc))
     created, expires = root.find(created_xpath), root.find(expires_xpath)
 

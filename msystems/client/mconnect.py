@@ -10,12 +10,12 @@ from policyholder.models import PolicyHolder
 logger = logging.getLogger(__name__)
 
 
-class MconnectClient:
+class MConnectClient:
 
     def __init__(self):
         self.url = MsystemsConfig.mconnect_config['url']
 
-        settings = Settings(strict=False, raw_response=True)
+        settings = Settings(strict=False, raw_response=False)
         self.client = Client(wsdl=self.url,
                              settings=settings,
                              plugins=[SoapWssePlugin(MsystemsConfig.mconnect_config['service_private_key'],
@@ -30,10 +30,13 @@ class MconnectClient:
         # Bounds for headers and idnp from Mconnect documentation, should not be exceeded in normal operation
         # Added for extra protection
 
+        username = user.username[:13] if user else MsystemsConfig.mconnect_config['get_person_calling_user'][:13]
+        eu_code = economic_unit.code[:13] if economic_unit \
+            else MsystemsConfig.mconnect_config['get_person_calling_entity'][:13]
+
         headers = {
-            "CallingUser": user.username[:13] or MsystemsConfig.mconnect_config['get_person_calling_user'][:13],
-            "CallingEntity": economic_unit.trade_name[:13]
-                             or MsystemsConfig.mconnect_config['get_person_calling_entity'][:13],
+            "CallingUser":username,
+            "CallingEntity":eu_code,
             "CallBasis": MsystemsConfig.mconnect_config['get_person_call_basis'][:256],
             "CallReason": MsystemsConfig.mconnect_config['get_person_call_reason'][:512]
         }
