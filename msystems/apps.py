@@ -1,6 +1,8 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
+    # Should OpenIMIS verify signatures and timestamps of incoming soap messages
+    "verify_incoming_soap_messages": True,
     # Mpass configurations
     "mpass_config": {
         "mpass_default_language": "ro",
@@ -129,6 +131,8 @@ class MsystemsConfig(AppConfig):
     IMIS_ADMIN = "IMIS Administrator"
     ENROLMENT_OFFICER = "Enrolment Officer"
     # ------------------ ####
+
+    verify_incoming_soap_messages = None
 
     mpass_config = None
     mpay_config = None
