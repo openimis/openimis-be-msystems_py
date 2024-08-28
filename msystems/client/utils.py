@@ -12,7 +12,7 @@ class SoapWssePlugin(Plugin):
     def __init__(self, service_private_key, service_certificate, mconnect_certificate):
         self.service_certificate = service_certificate
         self.service_private_key = service_private_key
-        self.mconnect_certificate = mconnect_certificate
+        self.client_certificate = mconnect_certificate
 
     def egress(self, envelope, http_headers, operation, binding_options):
         root = envelope
@@ -29,7 +29,7 @@ class SoapWssePlugin(Plugin):
             raise SoapClientError(str(e))
 
         try:
-            verify_signature(envelope, self.mconnect_certificate)
+            verify_signature(envelope, self.client_certificate)
         except SignatureVerificationFailed:
             raise SoapClientError("Envelope signature verification failed")
 

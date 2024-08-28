@@ -1,65 +1,68 @@
 from django.apps import AppConfig
 
 DEFAULT_CFG = {
-    "default_mpass_language": "ro",
-
-    # URL to be redirected to after successful login
-    "mpass_login_redirect": "",
-
-    "mpass_key_first_name": "FirstName",
-    "mpass_key_last_name": "LastName",
-    "mpass_key_dob": "BirthDate",
-    "mpass_key_roles": "Role",
-    "mpass_key_legal_entities": "OrganizationAdministrator",
-    # "mpass_key_legal_entities": "AdministeredLegalEntity",
-
     # Mpass configurations
     "mpass_config": {
-        # Strict mode: SAML responses must be validated strictly.
-        "strict": True,
-        # Set this to True for debugging purposes.
-        "debug": False,
-        # Service provider settings
-        "sp": {
-            # entityId, acs and sls urls are validated by IdP
-            "entityId": "",
-            # callback url for login attempts
-            "assertionConsumerService": {
-                "url": "",
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+        "mpass_default_language": "ro",
+
+        # URL to be redirected to after successful login
+        "mpass_login_redirect": "",
+
+        "mpass_key_first_name": "FirstName",
+        "mpass_key_last_name": "LastName",
+        "mpass_key_dob": "BirthDate",
+        "mpass_key_roles": "Role",
+        "mpass_key_legal_entities": "OrganizationAdministrator",
+        # "mpass_key_legal_entities": "AdministeredLegalEntity",
+
+
+        "saml_config": {
+            # Strict mode: SAML responses must be validated strictly.
+            "strict": True,
+            # Set this to True for debugging purposes.
+            "debug": False,
+            # Service provider settings
+            "sp": {
+                # entityId, acs and sls urls are validated by IdP
+                "entityId": "",
+                # callback url for login attempts
+                "assertionConsumerService": {
+                    "url": "",
+                    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+                },
+                # endpoint called from idp after logout
+                "singleLogoutService": {
+                    "url": "",
+                    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+                },
+                # X509 certificate for the SP, PEM string format
+                "x509cert": "",
+                # RSA private key, PEM string format
+                "privateKey": ""
             },
-            # endpoint called from idp after logout
-            "singleLogoutService": {
-                "url": "",
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+            "idp": {
+                "entityId": "",
+                # login endpoint to redirect from openIMIS
+                "singleSignOnService": {
+                    "url": "",
+                    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+                },
+                # endpoint to call after logout from openIMIS
+                "singleLogoutService": {
+                    "url": "",
+                    "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                },
+                # Idp public X509 certificate
+                "x509cert": ""
             },
-            # X509 certificate for the SP, PEM string format
-            "x509cert": "",
-            # RSA private key, PEM string format
-            "privateKey": ""
-        },
-        "idp": {
-            "entityId": "",
-            # login endpoint to redirect from openIMIS
-            "singleSignOnService": {
-                "url": "",
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+            # Advanced security options
+            "security": {
+                "authnRequestsSigned": True,
+                "logoutRequestSigned": True,
+                "logoutResponseSigned": True,
+                "signMetadata": True,
             },
-            # endpoint to call after logout from openIMIS
-            "singleLogoutService": {
-                "url": "",
-                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-            },
-            # Idp public X509 certificate
-            "x509cert": ""
-        },
-        # Advanced security options
-        "security": {
-            "authnRequestsSigned": True,
-            "logoutRequestSigned": True,
-            "logoutResponseSigned": True,
-            "signMetadata": True,
-        },
+        }
     },
     # Mpay configurations
     "mpay_config": {
@@ -99,10 +102,10 @@ DEFAULT_CFG = {
         "mconnect_certificate": "",
 
         # Get Person Soap Header default values
-        "get_person_calling_user": "", # len 13
-        "get_person_calling_entity": "", # len 13
-        "get_person_call_basis": "", # max len 256
-        "get_person_call_reason": "", # max len 512
+        "get_person_calling_user": "",  # len 13
+        "get_person_calling_entity": "",  # len 13
+        "get_person_call_basis": "",  # max len 256
+        "get_person_call_reason": "",  # max len 512
     },
     "voucher_config": {
         # The same as mpass cert
@@ -119,12 +122,6 @@ class MsystemsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "msystems"
 
-    mpass_key_first_name = None
-    mpass_key_last_name = None
-    mpass_dob = None
-    mpass_key_roles = None
-    mpass_key_legal_entities = None
-
     # DO NOT  CHANGE THIS ####
     ADMIN = "Admin"
     INSPECTOR = "Inspector"
@@ -133,9 +130,6 @@ class MsystemsConfig(AppConfig):
     ENROLMENT_OFFICER = "Enrolment Officer"
     # ------------------ ####
 
-    default_mpass_language = None
-
-    mpass_login_redirect = None
     mpass_config = None
     mpay_config = None
     mconnect_config = None

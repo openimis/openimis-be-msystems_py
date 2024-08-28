@@ -31,14 +31,14 @@ def _build_auth(request, slo_workaround=False) -> OneLogin_Saml2_Auth:
             req['get_data']['SAMLResponse'] = req["post_data"].get("SAMLResponse")
         if "SAMLRequest" in req["post_data"]:
             req['get_data']['SAMLRequest'] = req["post_data"].get("SAMLRequest")
-    return OneLogin_Saml2_Auth(req, MsystemsConfig.mpass_config)
+    return OneLogin_Saml2_Auth(req, MsystemsConfig.mpass_config["saml_config"])
 
 
 @require_GET
 def login(request):
     # From python3-saml django example
     auth = _build_auth(request)
-    login_request = auth.login(return_to=MsystemsConfig.mpass_login_redirect)
+    login_request = auth.login(return_to=MsystemsConfig.mpass_config["mpass_login_redirect"])
     return redirect(login_request)
 
 
@@ -56,7 +56,7 @@ def logout(request):
 def metadata(request):
     # from python3-saml docs
     saml_settings = OneLogin_Saml2_Settings(
-        settings=MsystemsConfig.mpass_config, sp_validation_only=True)
+        settings=MsystemsConfig.mpass_config["saml_config"], sp_validation_only=True)
     saml_metadata = saml_settings.get_sp_metadata()
     errors = saml_settings.validate_metadata(saml_metadata)
 
@@ -78,7 +78,7 @@ def _handle_acs_login(request):
     if errors:
         logger.error("SAML Login failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed login attempt for the user
-        return redirect(MsystemsConfig.mpass_login_redirect)
+        return redirect(MsystemsConfig.mpass_config["mpass_login_redirect"])
 
     username = auth.get_nameid()
     user_data = auth.get_attributes()
@@ -92,7 +92,7 @@ def _handle_acs_login(request):
     if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
         return redirect(auth.redirect_to(request.POST['RelayState']))
     else:
-        return redirect(MsystemsConfig.mpass_login_redirect)
+        return redirect(MsystemsConfig.mpass_config["mpass_login_redirect"])
 
 
 def _handle_acs_logout(request):
@@ -104,7 +104,7 @@ def _handle_acs_logout(request):
     if errors:
         logger.error("SAML Logout failed: %s\n%s", str(errors[-1]), auth.get_last_error_reason())
         # TODO Add information about failed logout attempt for the user
-        return redirect(MsystemsConfig.mpass_login_redirect)
+        return redirect(MsystemsConfig.mpass_config["mpass_login_redirect"])
 
     request.delete_jwt_cookie = True
     request.delete_refresh_token_cookie = True
@@ -112,7 +112,7 @@ def _handle_acs_logout(request):
     if 'RelayState' in request.POST and _validate_relay_state(request.POST['RelayState']):
         return redirect(auth.redirect_to(request.POST['RelayState']))
     else:
-        return redirect(MsystemsConfig.mpass_login_redirect)
+        return redirect(MsystemsConfig.mpass_config["mpass_login_redirect"])
 
 
 # Saml have its own csrf protection, django not needed
@@ -136,4 +136,4 @@ def _validate_relay_state(relay_state):
     # To avoid 'Open Redirect' attacks, before execute the redirection confirm
     # the value of the 'RelayState' is a trusted URL.
     # Currently, the only valid RelayState mpass_login_redirect
-    return relay_state == MsystemsConfig.mpass_login_redirect
+    return relay_state == MsystemsConfig.mpass_config["mpass_login_redirect"]
