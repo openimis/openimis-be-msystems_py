@@ -31,7 +31,7 @@ class MConnectClient:
         # Added for extra protection
 
         username = user.username[:13] if user else MsystemsConfig.mconnect_config['get_person_calling_user'][:13]
-        eu_code = economic_unit.trade_name[:13] if economic_unit \
+        eu_code = economic_unit.code[:13] if economic_unit \
             else MsystemsConfig.mconnect_config['get_person_calling_entity'][:13]
 
         headers = {
