@@ -4,8 +4,7 @@ import logging
 from lxml import etree
 from django.db import transaction
 from django.views.decorators.http import require_GET
-from django.http import HttpResponseNotFound
-from django.shortcuts import redirect
+from django.http import HttpResponseNotFound, JsonResponse
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import api_view
 from spyne.application import Application
@@ -14,7 +13,7 @@ from spyne.model.fault import Fault
 from spyne.protocol.soap import Soap11
 from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
-from urllib.parse import urljoin, quote_plus
+from urllib.parse import urljoin
 from zeep.exceptions import SignatureVerificationFailed
 
 from core import datetime
@@ -235,5 +234,12 @@ def mpay_bill_payment_redirect(request):
     bill_path = f"{MsystemsConfig.mpay_config['bill_path']}/{bill_id}/"
     redirect_back_url = urljoin(host, bill_path)
     redirect_url = urljoin(MsystemsConfig.mpay_config['url'], MsystemsConfig.mpay_config['payment_path'])
-    query = f"OrderKey={quote_plus(bill.code)}&ServiceID={quote_plus(MsystemsConfig.mpay_config['service_id'])}&ReturnUrl={quote_plus(redirect_back_url)}"
-    return redirect(f"{redirect_url}?{query}")
+
+    return JsonResponse({
+        "url": redirect_url,
+        "args": {
+            "OrderKey": bill.code,
+            "ServiceID": MsystemsConfig.mpay_config['service_id'],
+            "ReturnUrl": redirect_back_url
+        }
+    })
