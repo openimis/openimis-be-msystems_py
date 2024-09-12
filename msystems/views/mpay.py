@@ -13,7 +13,7 @@ from spyne.model.fault import Fault
 from spyne.protocol.soap import Soap11
 from spyne.server.django import DjangoApplication
 from spyne.service import ServiceBase
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote_plus
 from zeep.exceptions import SignatureVerificationFailed
 
 from core import datetime
@@ -238,8 +238,8 @@ def mpay_bill_payment_redirect(request):
     return JsonResponse({
         "url": redirect_url,
         "args": {
-            "OrderKey": bill.code,
-            "ServiceID": MsystemsConfig.mpay_config['service_id'],
-            "ReturnUrl": redirect_back_url
+            "OrderKey": quote_plus(bill.code),
+            "ServiceID": quote_plus(MsystemsConfig.mpay_config['service_id']),
+            "ReturnUrl": quote_plus(redirect_back_url)
         }
     })
