@@ -80,7 +80,7 @@ def _handle_acs_login(request):
         # TODO Add information about failed login attempt for the user
         return redirect(MsystemsConfig.mpass_config["mpass_login_redirect"])
 
-    username = auth.get_nameid()
+    username = auth.get_nameid().lower()
     user_data = auth.get_attributes()
 
     user = MpassUserService().login(username=username, user_data=user_data)
