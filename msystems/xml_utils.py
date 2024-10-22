@@ -1,3 +1,4 @@
+import logging
 import re
 import datetime as py_datetime
 
@@ -6,6 +7,8 @@ from lxml import etree
 
 from core import datetime
 from msystems.apps import MsystemsConfig
+
+logger = logging.getLogger(__name__)
 
 ns_envelope = "http://schemas.xmlsoap.org/soap/envelope/"
 ns_wss_util = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
@@ -62,6 +65,8 @@ def verify_timestamp(root):
     dt_expires = datetime.datetime.fromisoformat(replace_utc_timezone_with_offset(expires.text))
 
     if dt_created > dt_now:
+        logger.debug("Created timestamp is in the future: dt_created=%s dt_now=%s", dt_created, dt_now)
         raise ValueError('Created timestamp is in the future')
     if dt_expires < dt_now:
+        logger.debug("Envelope has expired: dt_expires=%s dt_now=%s", dt_expires, dt_now)
         raise ValueError('Envelope has expired')
